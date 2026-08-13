@@ -67,8 +67,12 @@ winner = pd.DataFrame({
 
     "break_points_generated": df["l_bpFaced"],
     "breaks_converted":
-        df["l_bpFaced"] - df["l_bpSaved"]
-
+        df["l_bpFaced"] - df["l_bpSaved"],
+        
+    "tourney_level": df["tourney_level"],
+    "tourney_name": df["tourney_name"],
+    "tourney_id": df["tourney_id"],
+    "round": df["round"],
 })
 
 loser = pd.DataFrame({
@@ -111,7 +115,12 @@ loser = pd.DataFrame({
 
     "break_points_generated": df["w_bpFaced"],
     "breaks_converted":
-        df["w_bpFaced"] - df["w_bpSaved"]
+        df["w_bpFaced"] - df["w_bpSaved"],
+        
+    "tourney_level": df["tourney_level"],
+    "tourney_name": df["tourney_name"],
+    "tourney_id": df["tourney_id"],
+    "round": df["round"],
 
 })
 

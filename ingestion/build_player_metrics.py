@@ -8,7 +8,10 @@ print("Loading analytics_player_matches...")
 df = pd.read_parquet(INPUT)
 
 df["tourney_date"] = pd.to_datetime(
-    df["tourney_date"].astype(str),
+    df["tourney_date"]
+        .fillna(0)
+        .astype(int)
+        .astype(str),
     format="%Y%m%d",
     errors="coerce"
 )
