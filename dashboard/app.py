@@ -6,6 +6,17 @@ st.set_page_config(
     layout="wide"
 )
 
+LEVEL_MAPPING = {
+    "Grand Slam": ["G"],
+    "Masters 1000": ["M", "1000"],
+    "ATP 500": ["500"],
+    "ATP 250": ["250"],
+    "Challenger": ["C"],
+    "Futures / ITF": ["F"],
+    "Davis Cup": ["D"],
+    "Olympic Games": ["O"]
+}
+
 PLAYER_METRICS = "data/parquet/player_metrics.parquet"
 H2H_OVERALL = "data/parquet/h2h_overall.parquet"
 H2H_SURFACE = "data/parquet/h2h_surface.parquet"
@@ -81,14 +92,83 @@ window = st.sidebar.selectbox(
         .unique()
     )
 )
-tournament_group = st.sidebar.selectbox(
-    "Tournament Level",
-    sorted(
-        df["tournament_group"]
-        .dropna()
-        .unique()
-    )
+st.sidebar.subheader(
+    "Tournament Categories"
 )
+
+include_gs = st.sidebar.checkbox(
+    "Grand Slam",
+    value=True
+)
+
+include_masters = st.sidebar.checkbox(
+    "Masters 1000",
+    value=True
+)
+
+include_500 = st.sidebar.checkbox(
+    "ATP 500",
+    value=True
+)
+
+include_250 = st.sidebar.checkbox(
+    "ATP 250",
+    value=True
+)
+
+include_challenger = st.sidebar.checkbox(
+    "Challenger",
+    value=False
+)
+
+include_futures = st.sidebar.checkbox(
+    "Futures / ITF",
+    value=False
+)
+
+include_davis = st.sidebar.checkbox(
+    "Davis Cup",
+    value=False
+)
+
+include_olympics = st.sidebar.checkbox(
+    "Olympic Games",
+    value=False
+)
+
+selected_levels = []
+
+if include_gs:
+    selected_levels.extend(["G"])
+
+if include_masters:
+    selected_levels.extend(["M", "1000"])
+
+if include_500:
+    selected_levels.extend(["500"])
+
+if include_250:
+    selected_levels.extend(["250"])
+
+if include_challenger:
+    selected_levels.extend(["C"])
+
+if include_futures:
+    selected_levels.extend(["F"])
+
+if include_davis:
+    selected_levels.extend(["D"])
+
+if include_olympics:
+    selected_levels.extend(["O"])
+    
+if not selected_levels:
+
+    st.warning(
+        "Select at least one tournament category."
+    )
+
+    st.stop()
 
 # --------------------------------------------------
 # Filter
@@ -98,8 +178,6 @@ filtered = df[
     (df["surface"] == surface)
     &
     (df["window"] == window)
-    &
-    (df["tournament_group"] == tournament_group)
 ]
 
 a = filtered[
@@ -130,7 +208,7 @@ st.header(
 )
 
 st.caption(
-    f"Surface: {surface} · Window: {window} · Tournament Level: {tournament_group}"
+    f"Surface: {surface} | Window: {window}"
 )
 
 
