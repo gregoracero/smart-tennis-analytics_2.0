@@ -1,5 +1,8 @@
 import pandas as pd
 import streamlit as st
+from utils.player_metrics_runtime import (
+    build_player_metrics
+)
 
 st.set_page_config(
     page_title="Smart Tennis Analytics",
@@ -21,6 +24,9 @@ PLAYER_METRICS = "data/parquet/player_metrics.parquet"
 H2H_OVERALL = "data/parquet/h2h_overall.parquet"
 H2H_SURFACE = "data/parquet/h2h_surface.parquet"
 H2H_MATCHES = "data/parquet/h2h_matches.parquet"
+PLAYER_MATCHES = (
+    "data/parquet/analytics_player_matches.parquet"
+)
 
 
 @st.cache_data
@@ -28,6 +34,10 @@ def load_data():
 
     metrics = pd.read_parquet(
         PLAYER_METRICS
+    )
+    
+    player_matches = pd.read_parquet(
+        PLAYER_MATCHES
     )
 
     h2h_overall = pd.read_parquet(
@@ -41,15 +51,17 @@ def load_data():
     h2h_matches = pd.read_parquet(
         H2H_MATCHES
     )
+            
 
     return (
         metrics,
+        player_matches,
         h2h_overall,
         h2h_surface,
         h2h_matches
     )
 
-df, h2h_overall, h2h_surface, h2h_matches = load_data()
+df,player_matches, h2h_overall, h2h_surface, h2h_matches = load_data()
 
 st.title("🎾 Smart Tennis Analytics")
 
@@ -180,15 +192,23 @@ filtered = df[
     (df["window"] == window)
 ]
 
-a = filtered[
-    filtered["player"] == player_a
-]
+a = build_player_metrics(
+    player_matches,
+    player_a,
+    surface,
+    selected_levels,
+    window
+)
 
-b = filtered[
-    filtered["player"] == player_b
-]
+b = build_player_metrics(
+    player_matches,
+    player_b,
+    surface,
+    selected_levels,
+    window
+)
 
-if a.empty or b.empty:
+if a is None or b is None:
 
     st.warning(
         "No metrics available for this selection."
@@ -196,8 +216,8 @@ if a.empty or b.empty:
 
     st.stop()
 
-a = a.iloc[0]
-b = b.iloc[0]
+
+
 
 # --------------------------------------------------
 # Header
