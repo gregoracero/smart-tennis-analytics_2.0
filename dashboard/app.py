@@ -81,6 +81,14 @@ window = st.sidebar.selectbox(
         .unique()
     )
 )
+tournament_group = st.sidebar.selectbox(
+    "Tournament Level",
+    sorted(
+        df["tournament_group"]
+        .dropna()
+        .unique()
+    )
+)
 
 # --------------------------------------------------
 # Filter
@@ -90,6 +98,8 @@ filtered = df[
     (df["surface"] == surface)
     &
     (df["window"] == window)
+    &
+    (df["tournament_group"] == tournament_group)
 ]
 
 a = filtered[
@@ -120,8 +130,9 @@ st.header(
 )
 
 st.caption(
-    f"Surface: {surface} | Window: {window}"
+    f"Surface: {surface} · Window: {window} · Tournament Level: {tournament_group}"
 )
+
 
 # --------------------------------------------------
 # Overview
