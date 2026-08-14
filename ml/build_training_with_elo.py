@@ -271,6 +271,61 @@ df["delta_surface_inactivity_days"] = (
 print()
 print("Saving...")
 
+columns_to_drop = [
+
+    "winner_id",
+    "loser_id",
+
+    "winner_elo_before",
+    "loser_elo_before",
+
+    "winner_stored_elo",
+    "loser_stored_elo",
+
+    "winner_surface_elo_before",
+    "loser_surface_elo_before",
+
+    "winner_surface_stored_elo",
+    "loser_surface_stored_elo",
+
+    "winner_is_new_player",
+    "loser_is_new_player",
+
+    "winner_days_inactive",
+    "loser_days_inactive",
+
+    "winner_surface_days_inactive",
+    "loser_surface_days_inactive",
+
+    "winner_matches_played",
+    "loser_matches_played",
+
+    "winner_surface_matches_played",
+    "loser_surface_matches_played"
+]
+
+df = df.drop(
+    columns=[
+        c
+        for c in columns_to_drop
+        if c in df.columns
+    ]
+)
+
+if "surface_x" in df.columns:
+
+    df = df.rename(
+        columns={
+            "surface_x": "surface"
+        }
+    )
+
+if "surface_y" in df.columns:
+
+    df = df.drop(
+        columns=["surface_y"]
+    )
+
 
 df.to_parquet(
     OUTPUT_PATH,

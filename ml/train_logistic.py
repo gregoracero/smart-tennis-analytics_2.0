@@ -10,19 +10,9 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-DATASET = "data/parquet/training_matches.parquet"
-
 SURFACE = "Hard"
 
 USE_ELO = True
-
-ATP_LEVELS = [
-    "G",
-    "M",
-    "1000",
-    "500",
-    "250"
-]
 
 if USE_ELO:
 
@@ -36,20 +26,25 @@ else:
         "data/parquet/training_matches.parquet"
     )
 
+ATP_LEVELS = [
+    "G",
+    "M",
+    "1000",
+    "500",
+    "250"
+]
+
+
+
 print("Loading dataset...")
 
 df = pd.read_parquet(
     DATASET
 )
 
-if USE_ELO: 
-    df = df[
-        df["surface_x"] == SURFACE
-    ]
-else:
-    df = df[
-        df["surface"] == SURFACE
-    ]
+df = df[
+    df["surface"] == SURFACE
+]
 
 
 df = df[

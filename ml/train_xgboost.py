@@ -8,10 +8,20 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 
+SURFACE = "Hard"
+USE_ELO = True
 
-DATASET = "data/parquet/training_matches.parquet"
+if USE_ELO:
 
-SURFACE = "Grass"
+    DATASET = (
+        "data/parquet/training_matches_with_elo.parquet"
+    )
+
+else:
+
+    DATASET = (
+        "data/parquet/training_matches.parquet"
+    )
 
 ATP_LEVELS = [
     "G",
@@ -27,8 +37,14 @@ df = pd.read_parquet(
     DATASET
 )
 
+surface_column = (
+    "surface_x"
+    if "surface_x" in df.columns
+    else "surface"
+)
+
 df = df[
-    df["surface"] == SURFACE
+    df[surface_column] == SURFACE
 ]
 
 
@@ -48,6 +64,8 @@ DROP_COLUMNS = [
     "player_a",
     "player_b",
     "surface",
+    "surface_x",
+    "surface_y",
     "match_date",
     "tourney_level"
 ]
@@ -66,12 +84,24 @@ X = df[
     feature_columns
 ]
 
+X = X.select_dtypes(
+    include=["number"]
+)
+
+feature_columns = (
+    X.columns.tolist()
+)
+
 y = df[
     TARGET
 ]
 
 print()
 print("FEATURES")
+print(len(feature_columns))
+
+print()
+print("FEATURES AFTER FILTER")
 print(len(feature_columns))
 
 imputer = SimpleImputer(
