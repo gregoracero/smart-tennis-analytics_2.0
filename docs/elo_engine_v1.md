@@ -5,19 +5,17 @@
 
 Production Ready
 
-Versi?n: ATP Elo Engine V1
+Version:
+ATP Elo Engine V1
 
-Estado actual:
-
-- Frozen
-- Ready for Feature Engineering
-- Ready for Model Training
+Status:
+Validated
 
 ---
 
 # Objetivo
 
-Construir un motor Elo hist?rico ATP para generar variables predictivas para modelos de Machine Learning.
+Construir un motor Elo hist?rico ATP para generar variables predictivas destinadas a modelos de Machine Learning.
 
 ---
 
@@ -46,7 +44,7 @@ Shape:
 
 ## training_matches_with_ids.parquet
 
-Dataset de entrenamiento enriquecido con IDs ATP.
+Dataset de entrenamiento enriquecido con ATP IDs.
 
 ---
 
@@ -54,15 +52,13 @@ Dataset de entrenamiento enriquecido con IDs ATP.
 
 Shape:
 
-(199940, 112)
+(199940, 91)
 
-Dataset final utilizado para entrenamiento con variables Elo.
+Dataset final utilizado para entrenamiento.
 
 ---
 
 # Elo General
-
-Configuraci?n:
 
 INITIAL_ELO = 1500
 
@@ -74,14 +70,12 @@ HALF_LIFE_DAYS = 730
 
 # Surface Elo
 
-Superficies:
+Superficies soportadas:
 
 - Hard
 - Clay
 - Grass
 - Carpet
-
-Configuraci?n:
 
 SURFACE_HALF_LIFE_DAYS = 3650
 
@@ -89,19 +83,15 @@ SURFACE_HALF_LIFE_DAYS = 3650
 
 # Dynamic K
 
-Grand Slam:
-40
+Grand Slam: 40
 
-Masters:
-32
+Masters: 32
 
-ATP 500:
-28
+ATP 500: 28
 
-ATP 250 y resto:
-24
+ATP 250 y resto: 24
 
-Incrementos:
+Reglas:
 
 if inactivity > 180:
     k *= 2
@@ -111,43 +101,13 @@ elif inactivity > 70:
 
 ---
 
-# Variables Elo
-
-## Overall Elo
-
-- winner_elo_before
-- loser_elo_before
-
-## Surface Elo
-
-- winner_surface_elo_before
-- loser_surface_elo_before
-
-## Actividad
-
-- winner_days_inactive
-- loser_days_inactive
-
-- winner_surface_days_inactive
-- loser_surface_days_inactive
-
-## Experiencia
-
-- winner_matches_played
-- loser_matches_played
-
-- winner_surface_matches_played
-- loser_surface_matches_played
-
----
-
 # Resultados Elo
 
-## Partidos Procesados
+Partidos procesados:
 
 366065
 
-## Jugadores ?nicos
+Jugadores ?nicos:
 
 11683
 
@@ -155,15 +115,36 @@ elif inactivity > 70:
 
 # Overall Elo
 
-Winner Mean: 1733.33
+Winner Mean:
+1733.33
 
-Loser Mean: 1666.45
+Loser Mean:
+1666.45
 
-Winner Std: 195.36
+Winner Std:
+195.36
 
-Loser Std: 165.16
+Loser Std:
+165.16
 
-Max Elo: 2639.43
+Max Elo:
+2639.43
+
+---
+
+# Distribuci?n Final Elo
+
+Mean:
+1500
+
+Std:
+81.47
+
+Min:
+1240.82
+
+Max:
+2471.47
 
 ---
 
@@ -171,52 +152,59 @@ Max Elo: 2639.43
 
 Hard
 
-Std: 73.47
+Std:
+73.47
 
-Max: 2341.40
+Max:
+2341.40
 
 Clay
 
-Std: 71.87
+Std:
+71.87
 
-Max: 2177.86
+Max:
+2177.86
 
 Grass
 
-Std: 65.73
+Std:
+65.73
 
-Max: 2131.02
+Max:
+2131.02
 
 Carpet
 
-Std: 55.27
+Std:
+55.27
 
-Max: 1967.64
-
----
-
-# Cobertura Lookup
-
-Missing Player A IDs: 32
-
-Missing Player B IDs: 32
-
-Cobertura: 99.97%
+Max:
+1967.64
 
 ---
 
-# Cobertura Elo Merge
+# Cobertura
+
+## Player Lookup
+
+Player A Missing IDs:
+32
+
+Player B Missing IDs:
+32
+
+Coverage:
+99.97%
+
+---
+
+## Elo Merge
 
 Training Rows:
 200520
 
-Direct Matches:
-99970
-
-Reverse Matches:
-99970
-
-Total Covered:
+Covered Rows:
 199940
 
 Coverage:
@@ -224,7 +212,7 @@ Coverage:
 
 ---
 
-# Nuevas Features
+# Features Elo
 
 ## Elo
 
@@ -238,18 +226,6 @@ Coverage:
 - surface_elo_b
 - delta_surface_elo
 
-## Experience
-
-- matches_played_a
-- matches_played_b
-- delta_matches_played
-
-## Surface Experience
-
-- surface_matches_played_a
-- surface_matches_played_b
-- delta_surface_matches_played
-
 ## Inactivity
 
 - days_inactive_a
@@ -262,51 +238,67 @@ Coverage:
 - surface_days_inactive_b
 - delta_surface_inactivity_days
 
+## Experience
+
+- matches_played_a
+- matches_played_b
+- delta_matches_played
+
+## Surface Experience
+
+- surface_matches_played_a
+- surface_matches_played_b
+- delta_surface_matches_played
+
 ---
 
-# Se?al Inicial Detectada
+# Se?al Predictiva Detectada
 
-delta_elo
+## delta_elo
 
 target=0 -> -58.96
 
 target=1 -> +58.96
 
-Gap = 117.92
+Gap:
+117.92
 
 ---
 
-delta_surface_elo
+## delta_surface_elo
 
 target=0 -> -51.89
 
 target=1 -> +51.89
 
-Gap = 103.78
+Gap:
+103.78
 
 ---
 
-delta_matches_played
+## delta_matches_played
 
 target=0 -> -35.64
 
 target=1 -> +35.64
 
-Gap = 71.28
+Gap:
+71.28
 
 ---
 
-delta_surface_matches_played
+## delta_surface_matches_played
 
 target=0 -> -23.56
 
 target=1 -> +23.56
 
-Gap = 47.12
+Gap:
+47.12
 
 ---
 
-delta_inactivity_days
+## delta_inactivity_days
 
 target=0 -> +12.51
 
@@ -314,7 +306,7 @@ target=1 -> -12.51
 
 ---
 
-delta_surface_inactivity_days
+## delta_surface_inactivity_days
 
 target=0 -> +22.98
 
@@ -322,7 +314,133 @@ target=1 -> -22.98
 
 ---
 
-# Pipeline
+# Benchmarking
+
+## Logistic Regression Baseline
+
+Dataset:
+training_matches.parquet
+
+Features:
+64
+
+Accuracy:
+0.6679
+
+ROC AUC:
+0.7317
+
+---
+
+## Logistic Regression + Elo
+
+Dataset:
+training_matches_with_elo.parquet
+
+Features:
+83
+
+Accuracy:
+0.7420
+
+ROC AUC:
+0.8161
+
+Improvement:
+
++0.0844 ROC AUC
+
+---
+
+## XGBoost Baseline
+
+Dataset:
+training_matches.parquet
+
+ROC AUC:
+0.7362
+
+---
+
+## XGBoost + Elo (Random Split)
+
+Dataset:
+training_matches_with_elo.parquet
+
+Accuracy:
+0.7988
+
+ROC AUC:
+0.8926
+
+Improvement:
+
++0.1564 ROC AUC
+
+---
+
+## XGBoost + Elo (Temporal Validation)
+
+Split Date:
+
+2023-01-01
+
+Train Rows:
+35808
+
+Test Rows:
+10566
+
+Accuracy:
+0.7785
+
+ROC AUC:
+0.8739
+
+---
+
+# Conclusiones
+
+## Elo
+
+Validado.
+
+Aporta se?al predictiva independiente.
+
+---
+
+## Surface Elo
+
+Validado.
+
+Aporta informaci?n complementaria al Elo general.
+
+---
+
+## Inactivity
+
+Validado.
+
+Es una de las variables m?s importantes del sistema.
+
+---
+
+## Temporal Validation
+
+La ca?da entre validaci?n aleatoria y temporal es m?nima:
+
+0.8926
+?
+0.8739
+
+Delta:
+-0.0187
+
+Por tanto el modelo generaliza correctamente y no depende de fugas de informaci?n significativas.
+
+---
+
+# Pipeline Final
 
 master_matches.parquet
     ->
@@ -350,32 +468,54 @@ build_training_with_elo.py
     ->
 training_matches_with_elo.parquet
 
+training_matches_with_elo.parquet
+    ->
+train_logistic.py
+
+training_matches_with_elo.parquet
+    ->
+train_xgboost.py
+
+training_matches_with_elo.parquet
+    ->
+train_xgboost_time_split.py
+
 ---
 
 # Estado del Proyecto
 
-Elo Engine: READY
+Data Quality:
+DONE
 
-Integration: READY
+Elo Engine:
+DONE
 
-Training Dataset: READY
+Feature Engineering:
+DONE
 
-Training Models: PENDING
+Integration:
+DONE
+
+Model Validation:
+DONE
+
+Temporal Validation:
+DONE
 
 ---
 
-# Pr?ximo Sprint
+# Resultado Actual
 
-Modelos:
+Best Model:
 
-- Logistic Regression
-- XGBoost
+XGBoost + Elo
 
-Comparativas:
+Temporal Validation ROC AUC:
 
-- Baseline
-- Baseline + Elo
+0.8739
 
-Objetivo:
+Status:
 
-Superar ROC AUC = 0.7362
+Ready for Hyperparameter Optimization
+Ready for Ensemble Models
+Ready for Probability Calibration
