@@ -1,329 +1,381 @@
+
 # ATP Elo Engine V1
 
 ## Estado
 
 Production Ready
 
-Fecha de congelación:
+Versi?n: ATP Elo Engine V1
 
-ELO Engine V1
+Estado actual:
 
----
-
-## Objetivo
-
-Construir un motor Elo histórico para ATP que permita generar variables predictivas para los modelos de Smart Tennis Analytics 2.0.
+- Frozen
+- Ready for Feature Engineering
+- Ready for Model Training
 
 ---
 
-## Dataset origen
+# Objetivo
 
-data/parquet/master_matches.parquet
-
----
-
-## Limpieza aplicada
-
-### Fechas
-
-Eliminación de registros con fecha inválida.
-
-### Duplicados
-
-Clave utilizada:
-
-- tourney_date
-- winner_id
-- loser_id
-- tourney_name
+Construir un motor Elo hist?rico ATP para generar variables predictivas para modelos de Machine Learning.
 
 ---
 
-## Identificación de jugadores
+# Artefactos Generados
 
-Se utilizan exclusivamente:
+## player_lookup.parquet
 
-- winner_id
-- loser_id
+Shape:
 
-Nunca nombres.
+(11682, 2)
+
+Columnas:
+
+- player_id
+- player_name
 
 ---
 
-## Elo General
+## player_elo_history.parquet
 
-### Configuración
+Shape:
 
-```python
+(366065, 23)
+
+---
+
+## training_matches_with_ids.parquet
+
+Dataset de entrenamiento enriquecido con IDs ATP.
+
+---
+
+## training_matches_with_elo.parquet
+
+Shape:
+
+(199940, 112)
+
+Dataset final utilizado para entrenamiento con variables Elo.
+
+---
+
+# Elo General
+
+Configuraci?n:
+
 INITIAL_ELO = 1500
+
 BASE_ELO = 1500
-```
 
-### Expected Score
-
-```python
-1 / (
-    1 +
-    10 ** (
-        (elo_b - elo_a) / 400
-    )
-)
-```
-
----
-
-## Decay Global
-
-### Configuración
-
-```python
 HALF_LIFE_DAYS = 730
-```
-
-### Objetivo
-
-Reducir la confianza sobre jugadores con largos periodos de inactividad.
 
 ---
 
-## Surface Elo
+# Surface Elo
 
-Superficies soportadas:
+Superficies:
 
 - Hard
 - Clay
 - Grass
 - Carpet
 
-### Configuración
+Configuraci?n:
 
-```python
 SURFACE_HALF_LIFE_DAYS = 3650
-```
-
-### Objetivo
-
-Mantener conocimiento histórico sobre una superficie específica durante periodos prolongados.
 
 ---
 
-## K Factor
+# Dynamic K
 
-### Grand Slam
-
-```python
+Grand Slam:
 40
-```
 
-### Masters
-
-```python
+Masters:
 32
-```
 
-### ATP 500
-
-```python
+ATP 500:
 28
-```
 
-### ATP 250 y resto
-
-```python
+ATP 250 y resto:
 24
-```
 
----
+Incrementos:
 
-## Dynamic K
-
-```python
-if max_days > 180:
+if inactivity > 180:
     k *= 2
 
-elif max_days > 70:
-    k *=*1.5
-```
+elif inactivity > 70:
+    k *= 1.5
 
 ---
 
-## Variables generad*s
+# Variables Elo
 
-### Elo*
+## Overall Elo
+
 - winner_elo_before
-- loser_elo_b*fore
+- loser_elo_before
 
-- winner_surface*elo_before
-- loser_surface_elo_bef*re
+## Surface Elo
 
-### Elo almacenado
+- winner_surface_elo_before
+- loser_surface_elo_before
 
-- winner_s*ored_elo
-- loser_stored_elo
+## Actividad
 
-- win*er_surface_stored_elo
-- loser_surf*ce_stored_elo
+- winner_days_inactive
+- loser_days_inactive
 
-### Actividad
-
-- wi*ner_days_inactive
-- loser_days_ina*tive
-
-- winner_surface_days_inacti*e
+- winner_surface_days_inactive
 - loser_surface_days_inactive
 
-#*# Experiencia
+## Experiencia
 
-- winner_matches_pl*yed
+- winner_matches_played
 - loser_matches_played
 
-- winn*r_surface_matches_played
-- loser_s*rface_matches_played
-
-### Flags
-
--*winner_is_new_player
-- loser_is_ne*_player
+- winner_surface_matches_played
+- loser_surface_matches_played
 
 ---
 
-## Artefacto generad*
+# Resultados Elo
 
-```text
-data/parquet/player_elo_*istory.parquet
-```
+## Partidos Procesados
 
----
+366065
 
-## Result*dos finales
+## Jugadores ?nicos
 
-### Partidos procesad*s
-
-```text
-366.065
-```
-
-### Jugado*es únicos
-
-```text
-11.683
-```
-
-###*Overall Elo
-
-```*ext
-Winner Mean = 1733
-*oser Mean  = 1666
-
-Winner Std  = 1*5*Loser Std   = 165
-
-Max*Elo     = 2639
-```
-
-### Surface El**
-#### Hard
-
-```text
-Std = 73
-Max =**340
-```
-
-#### Clay
-
-```text
-Std = *1
-Max = 2175
-```
-
-#### Grass
-
-```t*xt*Std = 65
-Max = 2126
-```
-
-####*Carpet
-
-```text
-Std = 55
-Max = 195**```
+11683
 
 ---
 
-## Decisiones de diseño
-*### Overall Elo
+# Overall Elo
 
-Incl*ye:
+Winner Mean: 1733.33
 
-- Decay
-- Dynamic K*- Inactividad
-- Experience
+Loser Mean: 1666.45
 
-### Su*face Elo
+Winner Std: 195.36
 
-Incluye:
+Loser Std: 165.16
 
-- Rating indep*ndiente
-- Surface Decay
-- Surface *xperience
-- Surface Inactivity
+Max Elo: 2639.43
 
-##* New Players
-
-Los jugadores sin hi*torial previo reciben:
-
-```python
-*ays_inactive = -1
-```
-
-y generan*
-
-- winner_is_new_player
-- loser_i*_new_player*
 ---
 
-## Próximas Features
+# Surface Elo
 
-- delt*_elo*- delta_surface_*lo
+Hard
 
+Std: 73.47
+
+Max: 2341.40
+
+Clay
+
+Std: 71.87
+
+Max: 2177.86
+
+Grass
+
+Std: 65.73
+
+Max: 2131.02
+
+Carpet
+
+Std: 55.27
+
+Max: 1967.64
+
+---
+
+# Cobertura Lookup
+
+Missing Player A IDs: 32
+
+Missing Player B IDs: 32
+
+Cobertura: 99.97%
+
+---
+
+# Cobertura Elo Merge
+
+Training Rows:
+200520
+
+Direct Matches:
+99970
+
+Reverse Matches:
+99970
+
+Total Covered:
+199940
+
+Coverage:
+99.71%
+
+---
+
+# Nuevas Features
+
+## Elo
+
+- elo_a
+- elo_b
+- delta_elo
+
+## Surface Elo
+
+- surface_elo_a
+- surface_elo_b
+- delta_surface_elo
+
+## Experience
+
+- matches_played_a
+- matches_played_b
 - delta_matches_played
-- delta*surface_matches_played
 
-- delta_in*ctivity_days
-- delta_surface_inact*vity_days
+## Surface Experience
+
+- surface_matches_played_a
+- surface_matches_played_b
+- delta_surface_matches_played
+
+## Inactivity
+
+- days_inactive_a
+- days_inactive_b
+- delta_inactivity_days
+
+## Surface Inactivity
+
+- surface_days_inactive_a
+- surface_days_inactive_b
+- delta_surface_inactivity_days
 
 ---
 
-## Próximo Sprint
-*player_elo_history.parquet
+# Se?al Inicial Detectada
 
-↓
+delta_elo
 
-Mer*e con training_matches
+target=0 -> -58.96
 
-↓
+target=1 -> +58.96
 
-*eature Engineering
+Gap = 117.92
 
-↓
+---
 
-XGBoost
+delta_surface_elo
 
-↓
-*Benchmark ROC AUC
+target=0 -> -51.89
 
-Objetivo inicia*:
+target=1 -> +51.89
 
-```text
-Superar 0.7362
-```
+Gap = 103.78
 
----*
-## Vers*ón
+---
 
-ATP Elo Engine V1
+delta_matches_played
 
-Estado:
+target=0 -> -35.64
 
-Fr*zen
+target=1 -> +35.64
 
-Ready*for Feature Engineering
+Gap = 71.28
+
+---
+
+delta_surface_matches_played
+
+target=0 -> -23.56
+
+target=1 -> +23.56
+
+Gap = 47.12
+
+---
+
+delta_inactivity_days
+
+target=0 -> +12.51
+
+target=1 -> -12.51
+
+---
+
+delta_surface_inactivity_days
+
+target=0 -> +22.98
+
+target=1 -> -22.98
+
+---
+
+# Pipeline
+
+master_matches.parquet
+    ->
+build_player_lookup.py
+    ->
+player_lookup.parquet
+
+master_matches.parquet
+    ->
+build_player_elo.py
+    ->
+player_elo_history.parquet
+
+training_matches.parquet
+    ->
+build_training_with_player_ids.py
+    ->
+training_matches_with_ids.parquet
+
+training_matches_with_ids.parquet
++
+player_elo_history.parquet
+    ->
+build_training_with_elo.py
+    ->
+training_matches_with_elo.parquet
+
+---
+
+# Estado del Proyecto
+
+Elo Engine: READY
+
+Integration: READY
+
+Training Dataset: READY
+
+Training Models: PENDING
+
+---
+
+# Pr?ximo Sprint
+
+Modelos:
+
+- Logistic Regression
+- XGBoost
+
+Comparativas:
+
+- Baseline
+- Baseline + Elo
+
+Objetivo:
+
+Superar ROC AUC = 0.7362
