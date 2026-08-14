@@ -12,7 +12,9 @@ from sklearn.preprocessing import StandardScaler
 
 DATASET = "data/parquet/training_matches.parquet"
 
-SURFACE = "Grass"
+SURFACE = "Hard"
+
+USE_ELO = True
 
 ATP_LEVELS = [
     "G",
@@ -22,15 +24,32 @@ ATP_LEVELS = [
     "250"
 ]
 
+if USE_ELO:
+
+    DATASET = (
+        "data/parquet/training_matches_with_elo.parquet"
+    )
+
+else:
+
+    DATASET = (
+        "data/parquet/training_matches.parquet"
+    )
+
 print("Loading dataset...")
 
 df = pd.read_parquet(
     DATASET
 )
 
-df = df[
-    df["surface"] == SURFACE
-]
+if USE_ELO: 
+    df = df[
+        df["surface_x"] == SURFACE
+    ]
+else:
+    df = df[
+        df["surface"] == SURFACE
+    ]
 
 
 df = df[
@@ -45,13 +64,24 @@ print(df.shape)
 
 TARGET = "target"
 
-DROP_COLUMNS = [
+if USE_ELO:
+    DROP_COLUMNS = [
     "player_a",
     "player_b",
-    "surface",
+    "surface_x",
+    "surface_y",
     "match_date",
     "tourney_level"
 ]
+else:
+    
+    DROP_COLUMNS = [
+        "player_a",
+        "player_b",
+        "surface",
+        "match_date",
+        "tourney_level"
+    ]
 
 feature_columns = [
 
@@ -67,6 +97,17 @@ X = df[
     feature_columns
 ]
 
+X = X.select_dtypes(
+    include=["number"]
+)
+
+feature_columns = (
+    X.columns.tolist()
+)
+print()
+print("FEATURES AFTER FILTER")
+print(len(feature_columns))
+
 y = df[
     TARGET
 ]
@@ -74,6 +115,20 @@ y = df[
 print()
 print("FEATURES")
 print(len(feature_columns))
+
+print()
+
+print("NON NUMERIC")
+
+non_numeric = [
+    c
+    for c in X.columns
+    if X[c].dtype == "object"
+]
+
+print(non_numeric)
+
+
 
 imputer = SimpleImputer(
     strategy="median"
@@ -118,7 +173,8 @@ print("TEST")
 print(len(X_test))
 
 model = LogisticRegression(
-    max_iter=2000
+    max_iter=2000,
+    random_state=42
 )
 
 print()
@@ -153,6 +209,19 @@ accuracy = accuracy_score(
 auc = roc_auc_score(
     y_test,
     probabilities
+)
+
+results = pd.DataFrame(
+    [{
+        "surface": SURFACE,
+        "accuracy": accuracy,
+        "roc_auc": auc
+    }]
+)
+
+results.to_csv(
+    "ml/reports/logistic_metrics.csv",
+    index=False
 )
 
 print()
