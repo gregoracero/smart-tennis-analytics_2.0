@@ -1,0 +1,6 @@
+{
+  "roc_auc": 0.8105312817535202,
+  "accuracy": 0.7259036144578314,
+  "training_rows": 622,
+  "validation_rows": 332
+}
