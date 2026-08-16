@@ -1,621 +1,521 @@
+# Activity vs Elo Study
 
-# ATP Elo Engine V1 - Experimental Analysis
+## Objective
 
-## Objetivo
-
-Validar el impacto real de:
-
-- Elo
-- Surface Elo
-- Inactividad
-- Ranking
-- Estad?sticas ATP
-
-sobre la capacidad predictiva del modelo.
-
-Todos los experimentos se ejecutaron utilizando:
-
-- Surface = Hard
-- Time Split = 2023-01-01
-- XGBoost
-- Validaci?n temporal
+Understand the real source of predictive power behind the ATP prediction system and determine whether the observed ROI could be explained by data leakage, implementation issues or by genuine predictive signals.
 
 ---
 
-# Benchmark Principal
+# Dataset Audit
 
-## XGBoost Baseline
+## Training Dataset
 
-Dataset:
+File:
 
 training_matches.parquet
 
-ROC AUC:
+Properties:
 
-0.7362
+- Symmetric dataset
+- Each real match generates two rows
+- Winner vs Loser -> target = 1
+- Loser vs Winner -> target = 0
+
+Purpose:
+
+- Model training
 
 ---
 
-## XGBoost + Elo + Inactivity
+## Elo History Dataset
+
+File:
+
+player_elo_history.parquet
+
+Properties:
+
+- One row per real ATP match
+- Stores Elo state before each match
+- Stores inactivity information
+- Stores surface inactivity information
+
+Rows:
+
+366,065
+
+Unique Matches:
+
+366,035
+
+Duplicates:
+
+30
+
+Duplicate rate:
+
+0.008%
+
+Conclusion:
+
+- Effectively a real-match dataset
+- Suitable for causal analysis
+
+---
+
+# Walk Forward Results
+
+Experience Only
+AUC = 0.570
+
+Rank Only
+AUC = 0.687
+
+No Elo
+AUC = 0.714
+
+Inactivity Only
+AUC = 0.764
+
+Readiness Only
+AUC = 0.817
+
+Elo Only
+AUC = 0.840
+
+Elo + Readiness
+AUC = 0.877
+
+Full Model
+AUC = 0.884
+
+Main finding:
+
+- Elo and Readiness explain nearly all predictive power
+
+---
+
+# ROI Results
+
+Experience Only
+ROI = -9%
+
+Readiness Only
+ROI = 31%
+
+Elo Only
+ROI = 41%
+
+Elo + Readiness
+ROI = 43%
+
+Full Model
+ROI = 46%
+
+Main finding:
+
+- Most economic value comes from Elo and Readiness
+
+---
+
+# Calibration
+
+0.95 - 0.98
+
+Predicted = 96.77%
+Actual    = 97.42%
+
+0.98 - 0.99
+
+Predicted = 98.53%
+Actual    = 99.07%
+
+0.99 - 1.00
+
+Predicted = 99.43%
+Actual    = 99.05%
+
+Conclusion:
+
+- Excellent calibration in extreme regions
+
+---
+
+# Stress Tests
+
+ODDS x 1.00
+
+ROI = 40.95%
+
+ODDS x 0.98
+
+ROI = 38.13%
+
+ODDS x 0.95
+
+ROI = 33.90%
+
+ODDS x 0.90
+
+ROI = 26.86%
+
+ODDS x 0.85
+
+ROI = 19.81%
+
+ODDS x 0.80
+
+ROI = 12.76%
+
+Conclusion:
+
+- Edge survives significant price degradation
+
+---
+
+# ROI by Edge
+
+EDGE > 0.02
+
+ROI = 32.45%
+
+EDGE > 0.05
+
+ROI = 40.95%
+
+EDGE > 0.10
+
+ROI = 58.74%
+
+EDGE > 0.15
+
+ROI = 76.49%
+
+EDGE > 0.20
+
+ROI = 87.74%
+
+EDGE > 0.25
+
+ROI = 95.06%
+
+EDGE > 0.30
+
+ROI = 102.73%
+
+EDGE > 0.35
+
+ROI = 112.02%
+
+EDGE > 0.40
+
+ROI = 125.15%
+
+Conclusion:
+
+- Edge ranking appears highly informative
+
+---
+
+# Favorites vs Underdogs
+
+Favorites
+
+BETS     2599
+HIT      87.80%
+ROI      25.84%
+
+Underdogs
+
+BETS     2229
+HIT      57.65%
+ROI      58.69%
+
+Conclusion:
+
+- Largest economic edge comes from selected underdogs
+
+---
+
+# Activity Signal Investigation
+
+## Correlation Analysis
+
+After isolating low Elo differences:
+
+corr(delta_inactivity_days, delta_elo)
+
+=
+-0.035
+
+corr(delta_inactivity_days, delta_rank_points)
+
+=
+-0.023
+
+Conclusion:
+
+- Activity appears largely independent of Elo and ranking strength
+
+---
+
+# Real Match Analysis
 
 Dataset:
 
-training_matches_with_elo.parquet
+player_elo_history.parquet
 
-ROC AUC:
-
-0.8739
-
-Mejora:
-
-+0.1377
+Only matches with valid inactivity information were used.
 
 ---
 
-# Ablation Study
+## Activity Advantage
 
-## Elo Only
+Real ATP Matches
 
-Features:
+Matches = 220,417
 
-- elo_a
-- elo_b
-- surface_elo_a
-- surface_elo_b
-- delta_elo
-- delta_surface_elo
+When players had different activity levels:
 
-Resultado:
+Winner was the more active player
 
-ROC AUC = 0.7211
+=
+81.52%
 
 ---
 
-## Inactivity Only
+## ATP Modern Era
 
-Features:
+2020+
 
-- days_inactive_a
-- days_inactive_b
-- delta_inactivity_days
+Matches = 32,509
 
-- surface_days_inactive_a
-- surface_days_inactive_b
-- delta_surface_inactivity_days
+Winner More Active
 
-Resultado:
-
-ROC AUC = 0.7814
+=
+79.83%
 
 ---
 
-## Ranking Only
+## Betting Period
 
-Features:
+2021+
 
-- rank_a
-- rank_b
-- delta_rank
+Matches = 30,290
 
-- rank_points_a
-- rank_points_b
-- delta_rank_points
+Winner More Active
 
-Resultado:
-
-ROC AUC = 0.6920
+=
+79.73%
 
 ---
 
-## Win Rate Only
+## By Surface
 
-Resultado:
+Hard
 
-ROC AUC = 0.6494
+81.04%
 
----
+Clay
 
-## Service Only
+81.10%
 
-Resultado:
+Grass
 
-ROC AUC = 0.6299
+82.28%
 
----
+Carpet
 
-## Return Only
+81.79%
 
-Resultado:
+Conclusion:
 
-ROC AUC = 0.5600
-
----
-
-## All Without Elo
-
-ROC AUC = 0.8708
-
-P?rdida respecto al modelo final:
-
--0.0031
+- Signal remains stable across eras and surfaces
 
 ---
 
-## All Without Inactivity
+# Activity and ROI
 
-ROC AUC = 0.8335
+All Bets
 
-P?rdida respecto al modelo final:
+Delta Inactivity < -30
 
--0.0404
+ROI       = 48.89%
+Hit Rate  = 85.09%
 
----
+Delta Inactivity -30 to -14
 
-## All Features
+ROI       = 83.01%
+Hit Rate  = 87.99%
 
-ROC AUC = 0.8739
+Delta Inactivity -14 to -7
 
----
+ROI       = 64.75%
+Hit Rate  = 86.87%
 
-# Conclusiones Ablation Study
+Delta Inactivity > 30
 
-Ranking de capacidad predictiva individual:
+ROI      = -71.85%
+Hit Rate = 13.04%
 
-1. Inactivity Only     0.7814
-2. Elo Only            0.7211
-3. Ranking Only        0.6920
-4. Win Rate Only       0.6494
-5. Service Only        0.6299
-6. Return Only         0.5600
+Conclusion:
 
-Observaciones:
-
-- Inactivity supera al baseline completo original.
-- Elo aporta se?al independiente.
-- Elo e Inactivity son complementarios.
-- Ranking explica parte de la se?al Elo.
-- Service y Return son m?s ?tiles en combinaci?n que individualmente.
+- Activity differential strongly affects profitability
 
 ---
 
-# Inactivity Analysis
+# Underdog Activity Study
 
-## Distribuci?n General
+Delta Inactivity -30 to -14
 
-days_inactive
+Hit Rate   = 79.75%
+ROI        = 132.13%
+Avg Odds   = 3.22
+Avg Elo    = -118
 
-P50:
+Delta Inactivity -14 to -7
 
-1 d?a
+Hit Rate   = 74.86%
+ROI        = 100.61%
+Avg Odds   = 3.01
+Avg Elo    = -95
 
-P75:
+Conclusion:
 
-13 d?as
-
-P90:
-
-28 d?as
-
-P95:
-
-50 d?as
-
-P99:
-
-176 d?as
-
-M?ximo:
-
-2457 d?as
+- Active underdogs generate the strongest returns
 
 ---
 
-## Distribuci?n Surface
+# Elo vs Activity Conflict
 
-surface_days_inactive
+Conditions:
 
-P50:
+edge > 5%
+delta_elo < 0
+delta_inactivity_days < -14
 
-1 d?a
+Results:
 
-P75:
+BETS               = 315
+WIN RATE           = 77.78%
+ROI                = 106.32%
 
-14 d?as
+AVG DELTA ELO      = -137.36
 
-P90:
+AVG DELTA INACTIVITY
 
-55 d?as
+= -32.83 days
 
-P95:
+Interpretation:
 
-135 d?as
-
-P99:
-
-357 d?as
-
-M?ximo:
-
-2646 d?as
+- Activity can overcome substantial Elo disadvantages
 
 ---
 
-# Removal Test
+# Final Conclusions
 
-Filtro:
+Finding 1
 
-days_inactive <= 540
-
-Resultado:
-
-Original:
-
-199940
-
-Filtrado:
-
-199388
-
-Eliminados:
-
-552
-
-Porcentaje:
-
-0.28%
-
-Conclusi?n:
-
-La se?al de inactividad NO proviene de jugadores retirados o casos extremos.
+Elo is a strong signal.
 
 ---
 
-# General vs Surface Inactivity
+Finding 2
 
-## General Inactivity Only
-
-Features:
-
-- days_inactive_a
-- days_inactive_b
-- delta_inactivity_days
-
-ROC AUC:
-
-0.7980
+Readiness is also a strong signal.
 
 ---
 
-## Surface Inactivity Only
+Finding 3
 
-Features:
-
-- surface_days_inactive_a
-- surface_days_inactive_b
-- delta_surface_inactivity_days
-
-ROC AUC:
-
-0.8004
+Readiness contains information not captured by Elo.
 
 ---
 
-## Conclusi?n
+Finding 4
 
-Ambas se?ales tienen pr?cticamente el mismo valor predictivo.
+Elo + Readiness explains almost all predictive power.
 
-La importancia de la inactividad no est? limitada a la superficie.
+Elo + Readiness
+=
+0.877 AUC
 
----
-
-# Elo Plus Inactivity
-
-Features:
-
-- Elo
-- Surface Elo
-- Inactivity
-- Surface Inactivity
-
-Total:
-
-12 variables
-
-Resultado:
-
-ROC AUC = 0.8576
-
-Comparaci?n:
-
-Modelo Completo:
-
-0.8739
-
-Diferencia:
-
-0.0163
-
-Conclusi?n:
-
-S?lo 12 variables explican aproximadamente el 98% del rendimiento del modelo.
+Full Model
+=
+0.884 AUC
 
 ---
 
-# Inactivity Capping Test
+Finding 5
 
-L?mites:
-
-days_inactive:
-
-90
-
-surface_days_inactive:
-
-180
-
-Resultado:
-
-ROC AUC = 0.7989
-
-Comparaci?n:
-
-Inactivity Original:
-
-0.7814
-
-Conclusi?n:
-
-Los valores extremos no son responsables de la capacidad predictiva observada.
+Selected active underdogs represent the most profitable segment.
 
 ---
 
-# Delta Inactivity Buckets
+Finding 6
 
-Variable:
+No clear evidence of:
 
-delta_inactivity_days
-
-Interpretaci?n:
-
-delta < 0
-
-player_a m?s activo
-
-delta > 0
-
-player_b m?s activo
-
-Resultados:
-
-< -90
-
-count = 3869
-
-win rate player_a = 83.38%
+- Data leakage
+- Label inversion
+- Player swapping
+- Major duplication issues
+- Sign errors
 
 ---
 
--90 a -30
+# Working Hypothesis
 
-count = 8576
+The market appears to price historical player quality more efficiently than current competitive readiness.
 
-win rate player_a = 81.44%
+The system gains most of its advantage when:
 
----
+- Elo and market disagree
+- Recent competitive activity strongly favors one player
+- The market underestimates the impact of match readiness
 
--30 a -7
+# Executive Summary
 
-count = 41080
+Most predictive power appears to come from:
 
-win rate player_a = 81.65%
-
----
-
--7 a 7
-
-count = 107194
-
-win rate player_a = 45.50%
-
----
-
-7 a 30
-
-count = 26873
-
-win rate player_a = 19.44%
-
----
-
-30 a 90
-
-count = 8556
-
-win rate player_a = 18.52%
-
----
-
-> 90
-
-count = 3792
-
-win rate player_a = 16.64%
-
----
-
-Conclusi?n
-
-La diferencia de actividad competitiva es extremadamente predictiva.
-
-Existe una relaci?n monot?nica clara:
-
-M?s activo -> mayor probabilidad de victoria.
-
----
-
-# Correlation Analysis
-
-Variables:
-
-- delta_elo
-- delta_surface_elo
-- delta_inactivity_days
-- delta_surface_inactivity_days
-- delta_rank
-
-Resultados clave:
-
-delta_elo ? delta_surface_elo
-
-0.877
-
----
-
-delta_inactivity ? delta_surface_inactivity
-
-0.678
-
----
-
-delta_elo ? delta_inactivity
-
--0.119
-
----
-
-delta_surface_elo ? delta_surface_inactivity
-
--0.108
-
----
-
-Conclusi?n
-
-Elo e Inactivity son pr?cticamente independientes.
-
-Miden dimensiones diferentes:
-
-Elo:
-
-- Fuerza hist?rica
-
-Inactivity:
-
-- Estado competitivo actual
-
----
-
-# Active Players Validation
-
-Objetivo:
-
-Comprobar que el modelo no depende de lesiones o inactividad extrema.
-
----
-
-## Ambos jugadores activos <= 14 d?as
-
-Rows:
-
-70682
-
-ROC AUC:
-
-0.8529
-
----
-
-## Ambos jugadores activos <= 7 d?as
-
-Rows:
-
-53252
-
-ROC AUC:
-
-0.8328
-
----
-
-# Conclusi?n Principal
-
-Incluso cuando ambos jugadores est?n activos y compitiendo regularmente:
-
-ROC AUC:
-
-0.83 - 0.85
-
-La capacidad predictiva sigue siendo muy elevada.
-
-Por tanto:
-
-- El modelo no depende de detectar lesionados.
-- El modelo no depende de retirados.
-- Elo mantiene su valor predictivo.
-- Las estad?sticas ATP mantienen valor predictivo.
-- Inactividad representa "match readiness" m?s que lesi?n.
-
----
-
-# Modelo Conceptual Final
-
-El sistema parece organizarse en tres capas:
-
-## 1. Strength
-
-Variables:
-
-- Elo
-- Surface Elo
-
-Representan:
-
-Fuerza hist?rica.
-
----
-
-## 2. Readiness
-
-Variables:
-
-- days_inactive
-- surface_days_inactive
-
-Representan:
-
-Estado competitivo actual.
-
----
-
-## 3. Tennis Skills
-
-Variables:
-
-- Service
-- Return
-- Win Rate
-- Ranking
-
-Representan:
-
-Caracter?sticas t?cnicas y rendimiento reciente.
-
----
-
-# Conclusi?n Final
-
-La combinaci?n:
-
-Strength
+Quality
 +
 Readiness
+
+where:
+
+Quality
+
+=
+Elo
 +
-Tennis Skills
+Surface Elo
 
-produce:
+and
 
-ROC AUC = 0.8739
+Readiness
 
-en validaci?n temporal.
+=
+Days Inactive
++
+Surface Days Inactive
 
-El hallazgo m?s importante del estudio es que la preparaci?n competitiva (Inactivity / Match Readiness) aporta una se?al predictiva tan relevante como la fuerza hist?rica medida mediante Elo.
+The difference between:
+
+Elo + Readiness = 0.877 AUC
+
+and
+
+Full Model = 0.884 AUC
+
+is very small, suggesting that the majority of model skill is concentrated in these two components.
+
+The strongest economic signal discovered during the investigation is:
+
+Underdog
++
+Much More Active
++
+Opponent Recently Inactive
+
+which consistently generates the highest ROI across multiple robustness tests.
