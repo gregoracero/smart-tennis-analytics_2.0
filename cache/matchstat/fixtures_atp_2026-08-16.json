@@ -1,0 +1,666 @@
+[
+  {
+    "id": 1324,
+    "date": "2026-08-16T23:15:00.000Z",
+    "roundId": 5,
+    "player1Id": 83223,
+    "player2Id": 37741,
+    "tournamentId": 21347,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": "30",
+    "live": null,
+    "player1": {
+      "id": 83223,
+      "name": "Daniel Merida Aguilar",
+      "countryAcr": "ESP"
+    },
+    "player2": {
+      "id": 37741,
+      "name": "Zizou Bergs",
+      "countryAcr": "BEL"
+    },
+    "tournament": {
+      "id": 21347,
+      "name": "Cincinnati Open - Cincinnati",
+      "courtId": 1,
+      "date": "2026-08-10T00:00:00.000Z",
+      "rankId": 3,
+      "countryAcr": "USA",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "United States",
+        "acronym": "USA"
+      }
+    },
+    "round": {
+      "id": 5,
+      "name": "Second"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 83223,
+      "id2_o": 37741,
+      "id_t_o": 21347,
+      "id_r_o": 5,
+      "k1": 1.901,
+      "k2": 1.971,
+      "total": 2.5,
+      "ktm": 1.645,
+      "ktb": 2.33,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 3.12,
+      "kf2": 1.392,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1570,
+    "date": "2026-08-16T23:15:00.000Z",
+    "roundId": 1,
+    "player1Id": 44250,
+    "player2Id": 67172,
+    "tournamentId": 21933,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 44250,
+      "name": "Matt Kuhar",
+      "countryAcr": "USA"
+    },
+    "player2": {
+      "id": 67172,
+      "name": "Paulo Saraiva Dos Santos",
+      "countryAcr": "BRA"
+    },
+    "tournament": {
+      "id": 21933,
+      "name": "Kingston 1 Challenger",
+      "courtId": 1,
+      "date": "2026-08-17T00:00:00.000Z",
+      "rankId": 1,
+      "countryAcr": "JAM",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "Jamaica",
+        "acronym": "JAM"
+      }
+    },
+    "round": {
+      "id": 1,
+      "name": "Q1"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 44250,
+      "id2_o": 67172,
+      "id_t_o": 21933,
+      "id_r_o": 1,
+      "k1": 2.95,
+      "k2": 1.392,
+      "total": 2.5,
+      "ktm": 1.472,
+      "ktb": 2.65,
+      "f1": 1.5,
+      "f2": -1.5,
+      "kf1": 1.794,
+      "kf2": 2,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1347,
+    "date": "2026-08-16T22:35:00.000Z",
+    "roundId": 5,
+    "player1Id": 93452,
+    "player2Id": 52721,
+    "tournamentId": 21347,
+    "timeGame": null,
+    "seed1": "16",
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 93452,
+      "name": "Learner Tien",
+      "countryAcr": "USA"
+    },
+    "player2": {
+      "id": 52721,
+      "name": "Sebastian Baez",
+      "countryAcr": "ARG"
+    },
+    "tournament": {
+      "id": 21347,
+      "name": "Cincinnati Open - Cincinnati",
+      "courtId": 1,
+      "date": "2026-08-10T00:00:00.000Z",
+      "rankId": 3,
+      "countryAcr": "USA",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "United States",
+        "acronym": "USA"
+      }
+    },
+    "round": {
+      "id": 5,
+      "name": "Second"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 93452,
+      "id2_o": 52721,
+      "id_t_o": 21347,
+      "id_r_o": 5,
+      "k1": 1.299,
+      "k2": 3.78,
+      "total": 2.5,
+      "ktm": 1.571,
+      "ktb": 2.49,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 1.962,
+      "kf2": 1.893,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1587,
+    "date": "2026-08-16T22:35:00.000Z",
+    "roundId": 1,
+    "player1Id": 96788,
+    "player2Id": 65383,
+    "tournamentId": 21933,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 96788,
+      "name": "Kenta Miyoshi",
+      "countryAcr": "JPN"
+    },
+    "player2": {
+      "id": 65383,
+      "name": "Arklon Huertas Del Pino",
+      "countryAcr": "PER"
+    },
+    "tournament": {
+      "id": 21933,
+      "name": "Kingston 1 Challenger",
+      "courtId": 1,
+      "date": "2026-08-17T00:00:00.000Z",
+      "rankId": 1,
+      "countryAcr": "JAM",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "Jamaica",
+        "acronym": "JAM"
+      }
+    },
+    "round": {
+      "id": 1,
+      "name": "Q1"
+    }
+  },
+  {
+    "id": 1589,
+    "date": "2026-08-16T22:35:00.000Z",
+    "roundId": 1,
+    "player1Id": 98292,
+    "player2Id": 83316,
+    "tournamentId": 21933,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 98292,
+      "name": "Miguel Tobon",
+      "countryAcr": "COL"
+    },
+    "player2": {
+      "id": 83316,
+      "name": "Lorenzo Claverie",
+      "countryAcr": "VEN"
+    },
+    "tournament": {
+      "id": 21933,
+      "name": "Kingston 1 Challenger",
+      "courtId": 1,
+      "date": "2026-08-17T00:00:00.000Z",
+      "rankId": 1,
+      "countryAcr": "JAM",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "Jamaica",
+        "acronym": "JAM"
+      }
+    },
+    "round": {
+      "id": 1,
+      "name": "Q1"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 98292,
+      "id2_o": 83316,
+      "id_t_o": 21933,
+      "id_r_o": 1,
+      "k1": 1.463,
+      "k2": 2.68,
+      "total": 2.5,
+      "ktm": 1.513,
+      "ktb": 2.53,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 2.2,
+      "kf2": 1.662,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1574,
+    "date": "2026-08-16T22:05:00.000Z",
+    "roundId": 1,
+    "player1Id": 58591,
+    "player2Id": 96297,
+    "tournamentId": 21933,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 58591,
+      "name": "Garrett Johns",
+      "countryAcr": "USA"
+    },
+    "player2": {
+      "id": 96297,
+      "name": "Guillaume Dalmasso",
+      "countryAcr": "FRA"
+    },
+    "tournament": {
+      "id": 21933,
+      "name": "Kingston 1 Challenger",
+      "courtId": 1,
+      "date": "2026-08-17T00:00:00.000Z",
+      "rankId": 1,
+      "countryAcr": "JAM",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "Jamaica",
+        "acronym": "JAM"
+      }
+    },
+    "round": {
+      "id": 1,
+      "name": "Q1"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 58591,
+      "id2_o": 96297,
+      "id_t_o": 21933,
+      "id_r_o": 1,
+      "k1": 1.312,
+      "k2": 3.38,
+      "total": 2.5,
+      "ktm": 1.457,
+      "ktb": 2.7,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 1.87,
+      "kf2": 1.917,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1253,
+    "date": "2026-08-16T22:00:00.000Z",
+    "roundId": 5,
+    "player1Id": 29372,
+    "player2Id": 14432,
+    "tournamentId": 21347,
+    "timeGame": null,
+    "seed1": "13",
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 29372,
+      "name": "Andrey Rublev",
+      "countryAcr": "RUS"
+    },
+    "player2": {
+      "id": 14432,
+      "name": "Pablo Carreno-Busta",
+      "countryAcr": "ESP"
+    },
+    "tournament": {
+      "id": 21347,
+      "name": "Cincinnati Open - Cincinnati",
+      "courtId": 1,
+      "date": "2026-08-10T00:00:00.000Z",
+      "rankId": 3,
+      "countryAcr": "USA",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "United States",
+        "acronym": "USA"
+      }
+    },
+    "round": {
+      "id": 5,
+      "name": "Second"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 29372,
+      "id2_o": 14432,
+      "id_t_o": 21347,
+      "id_r_o": 5,
+      "k1": 1.457,
+      "k2": 2.88,
+      "total": 2.5,
+      "ktm": 1.667,
+      "ktb": 2.28,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 2.33,
+      "kf2": 1.641,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1268,
+    "date": "2026-08-16T21:45:00.000Z",
+    "roundId": 5,
+    "player1Id": 31446,
+    "player2Id": 52279,
+    "tournamentId": 21347,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": "20",
+    "live": null,
+    "player1": {
+      "id": 31446,
+      "name": "Nuno Borges",
+      "countryAcr": "POR"
+    },
+    "player2": {
+      "id": 52279,
+      "name": "Francisco Cerundolo",
+      "countryAcr": "ARG"
+    },
+    "tournament": {
+      "id": 21347,
+      "name": "Cincinnati Open - Cincinnati",
+      "courtId": 1,
+      "date": "2026-08-10T00:00:00.000Z",
+      "rankId": 3,
+      "countryAcr": "USA",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "United States",
+        "acronym": "USA"
+      }
+    },
+    "round": {
+      "id": 5,
+      "name": "Second"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 31446,
+      "id2_o": 52279,
+      "id_t_o": 21347,
+      "id_r_o": 5,
+      "k1": 1.645,
+      "k2": 2.35,
+      "total": 2.5,
+      "ktm": 1.654,
+      "ktb": 2.3,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 2.69,
+      "kf2": 1.5,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1496,
+    "date": "2026-08-16T21:30:00.000Z",
+    "roundId": 12,
+    "player1Id": 18648,
+    "player2Id": 97984,
+    "tournamentId": 21929,
+    "timeGame": null,
+    "seed1": "ALT",
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 18648,
+      "name": "Nicolas Kicker",
+      "countryAcr": "ARG"
+    },
+    "player2": {
+      "id": 97984,
+      "name": "Maxim Mrva",
+      "countryAcr": "CZE"
+    },
+    "tournament": {
+      "id": 21929,
+      "name": "Todi Challenger",
+      "courtId": 2,
+      "date": "2026-08-10T00:00:00.000Z",
+      "rankId": 1,
+      "countryAcr": "ITA",
+      "court": {
+        "id": 2,
+        "name": "Clay"
+      },
+      "rank": null,
+      "country": {
+        "name": "Italy",
+        "acronym": "ITA"
+      }
+    },
+    "round": {
+      "id": 12,
+      "name": "Final"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 18648,
+      "id2_o": 97984,
+      "id_t_o": 21929,
+      "id_r_o": 12,
+      "k1": 2.48,
+      "k2": 1.575,
+      "total": 2.5,
+      "ktm": 1.585,
+      "ktb": 2.46,
+      "f1": 1.5,
+      "f2": -1.5,
+      "kf1": 1.588,
+      "kf2": 2.44,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  },
+  {
+    "id": 1580,
+    "date": "2026-08-16T21:25:00.000Z",
+    "roundId": 1,
+    "player1Id": 76333,
+    "player2Id": 78284,
+    "tournamentId": 21933,
+    "timeGame": null,
+    "seed1": null,
+    "seed2": null,
+    "live": null,
+    "player1": {
+      "id": 76333,
+      "name": "Aidan Mayo",
+      "countryAcr": "USA"
+    },
+    "player2": {
+      "id": 78284,
+      "name": "Timo Legout",
+      "countryAcr": "FRA"
+    },
+    "tournament": {
+      "id": 21933,
+      "name": "Kingston 1 Challenger",
+      "courtId": 1,
+      "date": "2026-08-17T00:00:00.000Z",
+      "rankId": 1,
+      "countryAcr": "JAM",
+      "court": {
+        "id": 1,
+        "name": "Hard"
+      },
+      "rank": null,
+      "country": {
+        "name": "Jamaica",
+        "acronym": "JAM"
+      }
+    },
+    "round": {
+      "id": 1,
+      "name": "Q1"
+    },
+    "odds": {
+      "id_b_o": 2,
+      "id1_o": 76333,
+      "id2_o": 78284,
+      "id_t_o": 21933,
+      "id_r_o": 1,
+      "k1": 1.794,
+      "k2": 2,
+      "total": 2.5,
+      "ktm": 1.578,
+      "ktb": 2.37,
+      "f1": -1.5,
+      "f2": 1.5,
+      "kf1": 2.81,
+      "kf2": 1.427,
+      "k20": null,
+      "k21": null,
+      "k12": null,
+      "k02": null,
+      "k30": null,
+      "k31": null,
+      "k32": null,
+      "k23": null,
+      "k13": null,
+      "k03": null
+    }
+  }
+]

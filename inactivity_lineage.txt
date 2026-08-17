@@ -1,0 +1,516 @@
+
+========================================================================================================================
+days_inactive
+========================================================================================================================
+
+ml\analyze_inactivity.py:8:    "days_inactive_a",
+ml\analyze_inactivity.py:9:    "days_inactive_b",
+ml\analyze_inactivity.py:10:    "surface_days_inactive_a",
+ml\analyze_inactivity.py:11:    "surface_days_inactive_b"
+ml\build_player_elo.py:14:    days_inactive
+ml\build_player_elo.py:17:    if days_inactive <= 0:
+ml\build_player_elo.py:21:        -days_inactive /
+ml\build_player_elo.py:36:    days_inactive
+ml\build_player_elo.py:39:    if days_inactive <= 0:
+ml\build_player_elo.py:43:        -days_inactive /
+ml\build_player_elo.py:90:def get_days_inactive(
+ml\build_player_elo.py:106:def get_surface_days_inactive(
+ml\build_player_elo.py:226:    winner_days = get_days_inactive(
+ml\build_player_elo.py:232:    loser_days = get_days_inactive(
+ml\build_player_elo.py:244:            get_surface_days_inactive(
+ml\build_player_elo.py:253:            get_surface_days_inactive(
+ml\build_player_elo.py:419:        "winner_days_inactive":
+ml\build_player_elo.py:422:        "loser_days_inactive":
+ml\build_player_elo.py:425:        "winner_surface_days_inactive":
+ml\build_player_elo.py:428:        "loser_surface_days_inactive":
+ml\build_player_elo.py:731:            "winner_days_inactive"
+ml\build_player_elo.py:735:            "loser_days_inactive"
+ml\build_player_state.py:27:        "winner_days_inactive",
+ml\build_player_state.py:28:        "winner_surface_days_inactive",
+ml\build_player_state.py:40:    "days_inactive",
+ml\build_player_state.py:41:    "surface_days_inactive",
+ml\build_player_state.py:53:        "loser_days_inactive",
+ml\build_player_state.py:54:        "loser_surface_days_inactive",
+ml\build_training_with_elo.py:21:days_inactive_a
+ml\build_training_with_elo.py:22:days_inactive_b
+ml\build_training_with_elo.py:24:surface_days_inactive_a
+ml\build_training_with_elo.py:25:surface_days_inactive_b
+ml\build_training_with_elo.py:115:direct["days_inactive_a"] = (
+ml\build_training_with_elo.py:116:    direct["winner_days_inactive"]
+ml\build_training_with_elo.py:119:direct["days_inactive_b"] = (
+ml\build_training_with_elo.py:120:    direct["loser_days_inactive"]
+ml\build_training_with_elo.py:123:direct["surface_days_inactive_a"] = (
+ml\build_training_with_elo.py:124:    direct["winner_surface_days_inactive"]
+ml\build_training_with_elo.py:127:direct["surface_days_inactive_b"] = (
+ml\build_training_with_elo.py:128:    direct["loser_surface_days_inactive"]
+ml\build_training_with_elo.py:184:reverse["days_inactive_a"] = (
+ml\build_training_with_elo.py:185:    reverse["loser_days_inactive"]
+ml\build_training_with_elo.py:188:reverse["days_inactive_b"] = (
+ml\build_training_with_elo.py:189:    reverse["winner_days_inactive"]
+ml\build_training_with_elo.py:192:reverse["surface_days_inactive_a"] = (
+ml\build_training_with_elo.py:193:    reverse["loser_surface_days_inactive"]
+ml\build_training_with_elo.py:196:reverse["surface_days_inactive_b"] = (
+ml\build_training_with_elo.py:197:    reverse["winner_surface_days_inactive"]
+ml\build_training_with_elo.py:259:    df["days_inactive_a"]
+ml\build_training_with_elo.py:261:    df["days_inactive_b"]
+ml\build_training_with_elo.py:265:    df["surface_days_inactive_a"]
+ml\build_training_with_elo.py:267:    df["surface_days_inactive_b"]
+ml\build_training_with_elo.py:294:    "winner_days_inactive",
+ml\build_training_with_elo.py:295:    "loser_days_inactive",
+ml\build_training_with_elo.py:297:    "winner_surface_days_inactive",
+ml\build_training_with_elo.py:298:    "loser_surface_days_inactive",
+ml\train_xgboost_ablation.py:79:        "days_inactive_a",
+ml\train_xgboost_ablation.py:80:        "days_inactive_b",
+ml\train_xgboost_ablation.py:82:        "surface_days_inactive_a",
+ml\train_xgboost_ablation.py:83:        "surface_days_inactive_b",
+ml\walk_forward_roi_elo_readiness.py:42:    "days_inactive_a",
+ml\walk_forward_roi_elo_readiness.py:43:    "days_inactive_b",
+ml\walk_forward_roi_elo_readiness.py:45:    "surface_days_inactive_a",
+ml\walk_forward_roi_elo_readiness.py:46:    "surface_days_inactive_b",
+production\services\prediction_service.py:132:        "days_inactive_a":
+production\services\prediction_service.py:134:                df["days_inactive_a"].iloc[0]
+production\services\prediction_service.py:137:        "days_inactive_b":
+production\services\prediction_service.py:139:                df["days_inactive_b"].iloc[0]
+production\services\prediction_service.py:142:        "surface_days_inactive_a":
+production\services\prediction_service.py:145:                    "surface_days_inactive_a"
+production\services\prediction_service.py:149:        "surface_days_inactive_b":
+production\services\prediction_service.py:152:                    "surface_days_inactive_b"
+production\services\prediction_service.py:281:        "days_inactive_a":
+production\services\prediction_service.py:283:                df["days_inactive_a"].iloc[0]
+production\services\prediction_service.py:286:        "days_inactive_b":
+production\services\prediction_service.py:288:                df["days_inactive_b"].iloc[0]
+production\services\prediction_service.py:291:        "surface_days_inactive_a":
+production\services\prediction_service.py:294:                    "surface_days_inactive_a"
+production\services\prediction_service.py:298:        "surface_days_inactive_b":
+production\services\prediction_service.py:301:                    "surface_days_inactive_b"
+production\analyze_calibration.py:445:                f"Inactivity A={prediction['days_inactive_a']}"
+production\analyze_calibration.py:449:                f"Inactivity B={prediction['days_inactive_b']}"
+production\analyze_calibration.py:453:                f"Surface Inactivity A={prediction['surface_days_inactive_a']}"
+production\analyze_calibration.py:457:                f"Surface Inactivity B={prediction['surface_days_inactive_b']}"
+production\build_features_historical.py:191:    days_inactive_a = (
+production\build_features_historical.py:197:    days_inactive_b = (
+production\build_features_historical.py:224:            "days_inactive_a":
+production\build_features_historical.py:225:                days_inactive_a,
+production\build_features_historical.py:227:            "days_inactive_b":
+production\build_features_historical.py:228:                days_inactive_b,
+production\build_features_historical.py:230:            "surface_days_inactive_a":
+production\build_features_historical.py:233:            "surface_days_inactive_b":
+production\build_features_historical.py:242:                days_inactive_a
+production\build_features_historical.py:244:                days_inactive_b,
+production\build_features_historical.py:439:    days_inactive_a = max(
+production\build_features_historical.py:448:    days_inactive_b = max(
+production\build_features_historical.py:478:            "days_inactive_a":
+production\build_features_historical.py:479:                days_inactive_a,
+production\build_features_historical.py:481:            "days_inactive_b":
+production\build_features_historical.py:482:                days_inactive_b,
+production\build_features_historical.py:484:            "surface_days_inactive_a":
+production\build_features_historical.py:487:            "surface_days_inactive_b":
+production\build_features_historical.py:496:                days_inactive_a
+production\build_features_historical.py:498:                days_inactive_b,
+production\build_player_state.py:27:        "winner_days_inactive",
+production\build_player_state.py:28:        "winner_surface_days_inactive",
+production\build_player_state.py:40:    "days_inactive",
+production\build_player_state.py:41:    "surface_days_inactive",
+production\build_player_state.py:53:        "loser_days_inactive",
+production\build_player_state.py:54:        "loser_surface_days_inactive",
+production\build_player_surface_state.py:17:        "winner_surface_days_inactive",
+production\build_player_surface_state.py:27:    "surface_days_inactive",
+production\build_player_surface_state.py:37:        "loser_surface_days_inactive",
+production\build_prediction_features.py:101:    days_inactive_a = (
+production\build_prediction_features.py:107:    days_inactive_b = (
+production\build_prediction_features.py:125:        "days_inactive_a":
+production\build_prediction_features.py:126:            days_inactive_a,
+production\build_prediction_features.py:128:        "days_inactive_b":
+production\build_prediction_features.py:129:            days_inactive_b,
+production\build_prediction_features.py:131:        "surface_days_inactive_a":
+production\build_prediction_features.py:134:        "surface_days_inactive_b":
+production\build_prediction_features.py:143:            days_inactive_a
+production\build_prediction_features.py:145:            days_inactive_b,
+production\feature_builder.py:152:    days_inactive_a = (
+production\feature_builder.py:158:    days_inactive_b = (
+production\feature_builder.py:185:            "days_inactive_a":
+production\feature_builder.py:186:                days_inactive_a,
+production\feature_builder.py:188:            "days_inactive_b":
+production\feature_builder.py:189:                days_inactive_b,
+production\feature_builder.py:191:            "surface_days_inactive_a":
+production\feature_builder.py:194:            "surface_days_inactive_b":
+production\feature_builder.py:203:                days_inactive_a
+production\feature_builder.py:205:                days_inactive_b,
+production\feature_builder.py:399:    days_inactive_a = max(
+production\feature_builder.py:408:    days_inactive_b = max(
+production\feature_builder.py:438:            "days_inactive_a":
+production\feature_builder.py:439:                days_inactive_a,
+production\feature_builder.py:441:            "days_inactive_b":
+production\feature_builder.py:442:                days_inactive_b,
+production\feature_builder.py:444:            "surface_days_inactive_a":
+production\feature_builder.py:447:            "surface_days_inactive_b":
+production\feature_builder.py:456:                days_inactive_a
+production\feature_builder.py:458:                days_inactive_b,
+production\prediction_widget.py:195:                result["days_inactive_a"],
+production\prediction_widget.py:204:                    "surface_days_inactive_a"
+production\prediction_widget.py:235:                result["days_inactive_b"],
+production\prediction_widget.py:244:                    "surface_days_inactive_b"
+
+
+
+
+========================================================================================================================
+surface_days_inactive
+========================================================================================================================
+
+ml\analyze_inactivity.py:10:    "surface_days_inactive_a",
+ml\analyze_inactivity.py:11:    "surface_days_inactive_b"
+ml\build_player_elo.py:106:def get_surface_days_inactive(
+ml\build_player_elo.py:244:            get_surface_days_inactive(
+ml\build_player_elo.py:253:            get_surface_days_inactive(
+ml\build_player_elo.py:425:        "winner_surface_days_inactive":
+ml\build_player_elo.py:428:        "loser_surface_days_inactive":
+ml\build_player_state.py:28:        "winner_surface_days_inactive",
+ml\build_player_state.py:41:    "surface_days_inactive",
+ml\build_player_state.py:54:        "loser_surface_days_inactive",
+ml\build_training_with_elo.py:24:surface_days_inactive_a
+ml\build_training_with_elo.py:25:surface_days_inactive_b
+ml\build_training_with_elo.py:123:direct["surface_days_inactive_a"] = (
+ml\build_training_with_elo.py:124:    direct["winner_surface_days_inactive"]
+ml\build_training_with_elo.py:127:direct["surface_days_inactive_b"] = (
+ml\build_training_with_elo.py:128:    direct["loser_surface_days_inactive"]
+ml\build_training_with_elo.py:192:reverse["surface_days_inactive_a"] = (
+ml\build_training_with_elo.py:193:    reverse["loser_surface_days_inactive"]
+ml\build_training_with_elo.py:196:reverse["surface_days_inactive_b"] = (
+ml\build_training_with_elo.py:197:    reverse["winner_surface_days_inactive"]
+ml\build_training_with_elo.py:265:    df["surface_days_inactive_a"]
+ml\build_training_with_elo.py:267:    df["surface_days_inactive_b"]
+ml\build_training_with_elo.py:297:    "winner_surface_days_inactive",
+ml\build_training_with_elo.py:298:    "loser_surface_days_inactive",
+ml\train_xgboost_ablation.py:82:        "surface_days_inactive_a",
+ml\train_xgboost_ablation.py:83:        "surface_days_inactive_b",
+ml\walk_forward_roi_elo_readiness.py:45:    "surface_days_inactive_a",
+ml\walk_forward_roi_elo_readiness.py:46:    "surface_days_inactive_b",
+production\services\prediction_service.py:142:        "surface_days_inactive_a":
+production\services\prediction_service.py:145:                    "surface_days_inactive_a"
+production\services\prediction_service.py:149:        "surface_days_inactive_b":
+production\services\prediction_service.py:152:                    "surface_days_inactive_b"
+production\services\prediction_service.py:291:        "surface_days_inactive_a":
+production\services\prediction_service.py:294:                    "surface_days_inactive_a"
+production\services\prediction_service.py:298:        "surface_days_inactive_b":
+production\services\prediction_service.py:301:                    "surface_days_inactive_b"
+production\analyze_calibration.py:453:                f"Surface Inactivity A={prediction['surface_days_inactive_a']}"
+production\analyze_calibration.py:457:                f"Surface Inactivity B={prediction['surface_days_inactive_b']}"
+production\build_features_historical.py:230:            "surface_days_inactive_a":
+production\build_features_historical.py:233:            "surface_days_inactive_b":
+production\build_features_historical.py:484:            "surface_days_inactive_a":
+production\build_features_historical.py:487:            "surface_days_inactive_b":
+production\build_player_state.py:28:        "winner_surface_days_inactive",
+production\build_player_state.py:41:    "surface_days_inactive",
+production\build_player_state.py:54:        "loser_surface_days_inactive",
+production\build_player_surface_state.py:17:        "winner_surface_days_inactive",
+production\build_player_surface_state.py:27:    "surface_days_inactive",
+production\build_player_surface_state.py:37:        "loser_surface_days_inactive",
+production\build_prediction_features.py:131:        "surface_days_inactive_a":
+production\build_prediction_features.py:134:        "surface_days_inactive_b":
+production\feature_builder.py:191:            "surface_days_inactive_a":
+production\feature_builder.py:194:            "surface_days_inactive_b":
+production\feature_builder.py:444:            "surface_days_inactive_a":
+production\feature_builder.py:447:            "surface_days_inactive_b":
+production\prediction_widget.py:204:                    "surface_days_inactive_a"
+production\prediction_widget.py:244:                    "surface_days_inactive_b"
+
+
+
+
+========================================================================================================================
+last_match
+========================================================================================================================
+
+ml\build_player_elo.py:93:    last_match_date
+ml\build_player_elo.py:96:    if player_id not in last_match_date:
+ml\build_player_elo.py:103:        last_match_date[player_id]
+ml\build_player_elo.py:166:last_match_date = {}
+ml\build_player_elo.py:229:        last_match_date
+ml\build_player_elo.py:235:        last_match_date
+ml\build_player_elo.py:524:    last_match_date[winner_id] = (
+ml\build_player_elo.py:528:    last_match_date[loser_id] = (
+ml\build_player_surface_last_match.py:70:    "data/parquet/player_surface_last_match.parquet",
+ml\build_player_surface_last_match.py:97:    "Saved: data/parquet/player_surface_last_match.parquet"
+production\build_features_historical.py:33:    / "player_surface_last_match.parquet"
+production\build_player_surface_last_match.py:70:    "data/parquet/player_surface_last_match.parquet",
+production\build_player_surface_last_match.py:97:    "Saved: data/parquet/player_surface_last_match.parquet"
+production\build_prediction_features.py:17:    "data/parquet/player_surface_last_match.parquet"
+production\feature_builder.py:25:    / "player_surface_last_match.parquet"
+ingestion\build_h2h_engine.py:66:            "last_match_date": None
+ingestion\build_h2h_engine.py:78:    prev = overall[overall_key]["last_match_date"]
+ingestion\build_h2h_engine.py:81:        overall[overall_key]["last_match_date"] = current_date
+ingestion\build_h2h_engine.py:100:            "last_match_date": None
+ingestion\build_h2h_engine.py:110:    prev = surface_h2h[surface_key]["last_match_date"]
+ingestion\build_h2h_engine.py:113:        surface_h2h[surface_key]["last_match_date"] = current_date
+
+
+
+
+========================================================================================================================
+surface_last
+========================================================================================================================
+
+ml\build_player_surface_last_match.py:70:    "data/parquet/player_surface_last_match.parquet",
+ml\build_player_surface_last_match.py:97:    "Saved: data/parquet/player_surface_last_match.parquet"
+production\build_features_historical.py:33:    / "player_surface_last_match.parquet"
+production\build_player_surface_last_match.py:70:    "data/parquet/player_surface_last_match.parquet",
+production\build_player_surface_last_match.py:97:    "Saved: data/parquet/player_surface_last_match.parquet"
+production\build_prediction_features.py:17:    "data/parquet/player_surface_last_match.parquet"
+production\feature_builder.py:25:    / "player_surface_last_match.parquet"
+
+
+
+
+========================================================================================================================
+match_date
+========================================================================================================================
+
+ml\build_player_elo.py:93:    last_match_date
+ml\build_player_elo.py:96:    if player_id not in last_match_date:
+ml\build_player_elo.py:103:        last_match_date[player_id]
+ml\build_player_elo.py:110:    last_surface_match_date
+ml\build_player_elo.py:114:        surface not in last_surface_match_date
+ml\build_player_elo.py:116:        player_id not in last_surface_match_date[surface]
+ml\build_player_elo.py:123:        last_surface_match_date[surface][player_id]
+ml\build_player_elo.py:132:master["match_date"] = pd.to_datetime(
+ml\build_player_elo.py:139:    subset=["match_date"]
+ml\build_player_elo.py:152:    "match_date"
+ml\build_player_elo.py:166:last_match_date = {}
+ml\build_player_elo.py:167:last_surface_match_date = {
+ml\build_player_elo.py:220:    current_date = match["match_date"]
+ml\build_player_elo.py:229:        last_match_date
+ml\build_player_elo.py:235:        last_match_date
+ml\build_player_elo.py:248:                last_surface_match_date
+ml\build_player_elo.py:257:                last_surface_match_date
+ml\build_player_elo.py:384:        "match_date": current_date,
+ml\build_player_elo.py:524:    last_match_date[winner_id] = (
+ml\build_player_elo.py:528:    last_match_date[loser_id] = (
+ml\build_player_elo.py:533:        last_surface_match_date[surface][winner_id] = (
+ml\build_player_elo.py:537:        last_surface_match_date[surface][loser_id] = (
+ml\build_player_state.py:9:    "match_date"
+ml\build_player_state.py:19:    elo["match_date"].max()
+ml\build_player_state.py:31:        "match_date",
+ml\build_player_state.py:44:    "match_date",
+ml\build_player_state.py:57:        "match_date",
+ml\build_player_state.py:73:    "match_date"
+ml\build_player_surface_last_match.py:9:    "match_date"
+ml\build_player_surface_last_match.py:18:        "match_date"
+ml\build_player_surface_last_match.py:27:    "last_surface_match_date"
+ml\build_player_surface_last_match.py:36:        "match_date"
+ml\build_player_surface_last_match.py:57:        "last_surface_match_date"
+ml\build_training_matches.py:35:master["match_date"] = pd.to_datetime(
+ml\build_training_matches.py:44:    master["match_date"].dt.year >= START_YEAR
+ml\build_training_matches.py:65:player_matches["match_date"] = pd.to_datetime(
+ml\build_training_matches.py:74:    master["match_date"].notna()
+ml\build_training_matches.py:78:    player_matches["match_date"].notna()
+ml\build_training_matches.py:84:    match_date
+ml\build_training_matches.py:92:        (player_matches["match_date"] < match_date)
+ml\build_training_matches.py:96:        "match_date",
+ml\build_training_matches.py:131:    match_date
+ml\build_training_matches.py:137:        match_date
+ml\build_training_matches.py:358:    match_date,
+ml\build_training_matches.py:365:        match_date
+ml\build_training_matches.py:371:        match_date
+ml\build_training_matches.py:390:        "match_date": match_date,
+ml\build_training_matches.py:392:        "match_year": match_date.year,
+ml\build_training_matches.py:572:            match["match_date"],
+ml\build_training_matches.py:602:            match["match_date"],
+ml\build_training_with_elo.py:70:training["match_date"] = pd.to_datetime(
+ml\build_training_with_elo.py:71:    training["match_date"]
+ml\build_training_with_elo.py:74:elo["match_date"] = pd.to_datetime(
+ml\build_training_with_elo.py:75:    elo["match_date"]
+ml\build_training_with_elo.py:88:        "match_date"
+ml\build_training_with_elo.py:93:        "match_date"
+ml\build_training_with_elo.py:157:        "match_date"
+ml\build_training_with_elo.py:162:        "match_date"
+ml\train_logistic.py:68:    "match_date",
+ml\train_logistic.py:77:        "match_date",
+ml\train_model.py:65:df["match_date"] = pd.to_datetime(
+ml\train_model.py:66:    df["match_date"]
+ml\train_model.py:99:    "match_date",
+ml\train_model.py:122:    df["match_date"] <
+ml\train_xgboost.py:69:    "match_date",
+ml\train_xgboost_ablation.py:35:df["match_date"] = pd.to_datetime(
+ml\train_xgboost_ablation.py:36:    df["match_date"]
+ml\train_xgboost_ablation.py:59:        "match_date",
+ml\train_xgboost_ablation.py:189:        df["match_date"]
+ml\train_xgboost_calibrated.py:27:df["match_date"] = pd.to_datetime(
+ml\train_xgboost_calibrated.py:28:    df["match_date"]
+ml\train_xgboost_calibrated.py:40:    "match_date",
+ml\train_xgboost_calibrated.py:64:    df["match_date"]
+ml\train_xgboost_calibrated_atp.py:31:df["match_date"] = pd.to_datetime(
+ml\train_xgboost_calibrated_atp.py:32:    df["match_date"]
+ml\train_xgboost_calibrated_atp.py:55:    "match_date",
+ml\train_xgboost_calibrated_atp.py:81:    df["match_date"]
+ml\train_xgboost_shap.py:27:df["match_date"] = pd.to_datetime(
+ml\train_xgboost_shap.py:28:    df["match_date"]
+ml\train_xgboost_shap.py:39:    "match_date",
+ml\train_xgboost_shap.py:71:    df["match_date"]
+ml\train_xgboost_time_split.py:61:df["match_date"] = pd.to_datetime(
+ml\train_xgboost_time_split.py:62:    df["match_date"]
+ml\train_xgboost_time_split.py:77:    "match_date",
+ml\train_xgboost_time_split.py:108:    df["match_date"] < SPLIT_DATE
+ml\train_xgboost_time_split.py:112:    df["match_date"] >= SPLIT_DATE
+ml\walk_forward_delta_elo_only.py:15:df["match_date"] = pd.to_datetime(
+ml\walk_forward_delta_elo_only.py:16:    df["match_date"]
+ml\walk_forward_delta_elo_only.py:34:        df["match_date"].dt.year < year
+ml\walk_forward_delta_elo_only.py:38:        df["match_date"].dt.year == year
+ml\walk_forward_roi_elo_readiness.py:19:train_df["match_date"] = pd.to_datetime(
+ml\walk_forward_roi_elo_readiness.py:20:    train_df["match_date"]
+ml\walk_forward_roi_elo_readiness.py:23:odds_df["match_date"] = pd.to_datetime(
+ml\walk_forward_roi_elo_readiness.py:24:    odds_df["match_date"]
+ml\walk_forward_roi_elo_readiness.py:70:        train_df["match_date"].dt.year < year
+ml\walk_forward_roi_elo_readiness.py:74:        odds_df["match_date"].dt.year == year
+ml\walk_forward_roi_no_inactivity.py:19:train_df["match_date"] = pd.to_datetime(
+ml\walk_forward_roi_no_inactivity.py:20:    train_df["match_date"]
+ml\walk_forward_roi_no_inactivity.py:23:odds_df["match_date"] = pd.to_datetime(
+ml\walk_forward_roi_no_inactivity.py:24:    odds_df["match_date"]
+ml\walk_forward_roi_no_inactivity.py:71:        train_df["match_date"].dt.year < year
+ml\walk_forward_roi_no_inactivity.py:75:        odds_df["match_date"].dt.year == year
+ml\walk_forward_surface_elo_only.py:15:df["match_date"] = pd.to_datetime(
+ml\walk_forward_surface_elo_only.py:16:    df["match_date"]
+ml\walk_forward_surface_elo_only.py:34:        df["match_date"].dt.year < year
+ml\walk_forward_surface_elo_only.py:38:        df["match_date"].dt.year == year
+production\services\daily_prediction_service.py:136:                match_date=
+production\services\prediction_service.py:42:    match_date,
+production\services\prediction_service.py:68:        match_date
+production\services\prediction_service.py:192:    match_date,
+production\services\prediction_service.py:217:        match_date
+production\analyze_calibration.py:88:                match_date=
+production\analyze_calibration.py:424:                match_date=
+production\analyze_calibration.py:517:            match_date=
+production\analyze_canada_calibration.py:50:    train["match_date_int"] = (
+production\analyze_canada_calibration.py:52:            train["match_date"]
+production\analyze_canada_calibration.py:71:            "match_date_int"
+production\analyze_unique_edge_roi.py:11:    + df["match_date"].astype(str)
+production\analyze_unique_match_roi.py:11:    + df["match_date"].astype(str)
+production\analyze_usopen_2025_calibration.py:55:    train["match_date_int"] = (
+production\analyze_usopen_2025_calibration.py:57:            train["match_date"]
+production\analyze_usopen_2025_calibration.py:76:            "match_date_int"
+production\build_features_historical.py:3:#Busca el £ltimo estado anterior o igual al match_date.
+production\build_features_historical.py:4:#Busca el £ltimo estado de superficie anterior o igual al match_date.
+production\build_features_historical.py:45:player_state["match_date"] = pd.to_datetime(
+production\build_features_historical.py:46:    player_state["match_date"]
+production\build_features_historical.py:49:surface_state["last_surface_match_date"] = pd.to_datetime(
+production\build_features_historical.py:50:    surface_state["last_surface_match_date"]
+production\build_features_historical.py:58:    match_date
+production\build_features_historical.py:61:    match_date = pd.to_datetime(
+production\build_features_historical.py:62:        match_date
+production\build_features_historical.py:115:            match_date
+production\build_features_historical.py:118:                "last_surface_match_date"
+production\build_features_historical.py:131:            match_date
+production\build_features_historical.py:134:                "last_surface_match_date"
+production\build_features_historical.py:151:        match_date
+production\build_features_historical.py:156:        a_state["match_date"]
+production\build_features_historical.py:168:        b_state["match_date"]
+production\build_features_historical.py:176:                "last_surface_match_date"
+production\build_features_historical.py:185:                "last_surface_match_date"
+production\build_features_historical.py:192:        match_date
+production\build_features_historical.py:194:        a_state["match_date"]
+production\build_features_historical.py:198:        match_date
+production\build_features_historical.py:200:        b_state["match_date"]
+production\build_features_historical.py:258:    match_date
+production\build_features_historical.py:261:    match_date = pd.to_datetime(
+production\build_features_historical.py:262:        match_date
+production\build_features_historical.py:277:                player_state["match_date"]
+production\build_features_historical.py:278:                <= match_date
+production\build_features_historical.py:284:            "match_date"
+production\build_features_historical.py:309:                player_state["match_date"]
+production\build_features_historical.py:310:                <= match_date
+production\build_features_historical.py:316:            "match_date"
+production\build_features_historical.py:349:                    "last_surface_match_date"
+production\build_features_historical.py:351:                <= match_date
+production\build_features_historical.py:357:            "last_surface_match_date"
+production\build_features_historical.py:382:                    "last_surface_match_date"
+production\build_features_historical.py:384:                <= match_date
+production\build_features_historical.py:390:            "last_surface_match_date"
+production\build_features_historical.py:412:                match_date
+production\build_features_historical.py:415:                    "last_surface_match_date"
+production\build_features_historical.py:431:                match_date
+production\build_features_historical.py:434:                    "last_surface_match_date"
+production\build_features_historical.py:442:            match_date
+production\build_features_historical.py:444:            a_state["match_date"]
+production\build_features_historical.py:451:            match_date
+production\build_features_historical.py:453:            b_state["match_date"]
+production\build_features_historical.py:518:        match_date="2026-08-04"
+production\build_player_state.py:9:    "match_date"
+production\build_player_state.py:19:    elo["match_date"].max()
+production\build_player_state.py:31:        "match_date",
+production\build_player_state.py:44:    "match_date",
+production\build_player_state.py:57:        "match_date",
+production\build_player_state.py:73:    "match_date"
+production\build_player_surface_last_match.py:9:    "match_date"
+production\build_player_surface_last_match.py:18:        "match_date"
+production\build_player_surface_last_match.py:27:    "last_surface_match_date"
+production\build_player_surface_last_match.py:36:        "match_date"
+production\build_player_surface_last_match.py:57:        "last_surface_match_date"
+production\build_player_surface_state.py:9:    "match_date"
+production\build_player_surface_state.py:19:        "match_date"
+production\build_player_surface_state.py:29:    "match_date"
+production\build_player_surface_state.py:39:        "match_date"
+production\build_player_surface_state.py:54:    "match_date"
+production\build_prediction_features.py:8:future["match_date"] = pd.to_datetime(
+production\build_prediction_features.py:9:    future["match_date"]
+production\build_prediction_features.py:20:state["match_date"] = pd.to_datetime(
+production\build_prediction_features.py:21:    state["match_date"]
+production\build_prediction_features.py:25:    "last_surface_match_date"
+production\build_prediction_features.py:28:        "last_surface_match_date"
+production\build_prediction_features.py:41:    prediction_date = match["match_date"]
+production\build_prediction_features.py:81:                "last_surface_match_date"
+production\build_prediction_features.py:97:                "last_surface_match_date"
+production\build_prediction_features.py:104:        a_state["match_date"]
+production\build_prediction_features.py:110:        b_state["match_date"]
+production\compare_model_market_unique.py:11:    + df["match_date"].astype(str)
+production\feature_builder.py:37:player_state["match_date"] = pd.to_datetime(
+production\feature_builder.py:38:    player_state["match_date"]
+production\feature_builder.py:41:surface_state["last_surface_match_date"] = pd.to_datetime(
+production\feature_builder.py:42:    surface_state["last_surface_match_date"]
+production\feature_builder.py:50:    match_date
+production\feature_builder.py:53:    match_date = pd.to_datetime(
+production\feature_builder.py:54:        match_date
+production\feature_builder.py:107:            match_date
+production\feature_builder.py:110:                "last_surface_match_date"
+production\feature_builder.py:123:            match_date
+production\feature_builder.py:126:                "last_surface_match_date"
+production\feature_builder.py:137:                "last_surface_match_date"
+production\feature_builder.py:146:                "last_surface_match_date"
+production\feature_builder.py:153:        match_date
+production\feature_builder.py:155:        a_state["match_date"]
+production\feature_builder.py:159:        match_date
+production\feature_builder.py:161:        b_state["match_date"]
+production\feature_builder.py:218:    match_date
+production\feature_builder.py:221:    match_date = pd.to_datetime(
+production\feature_builder.py:222:        match_date
+production\feature_builder.py:237:                player_state["match_date"]
+production\feature_builder.py:238:                <= match_date
+production\feature_builder.py:244:            "match_date"
+production\feature_builder.py:269:                player_state["match_date"]
+production\feature_builder.py:270:                <= match_date
+production\feature_builder.py:276:            "match_date"
+production\feature_builder.py:309:                    "last_surface_match_date"
+production\feature_builder.py:311:                <= match_date
+production\feature_builder.py:317:            "last_surface_match_date"
+production\feature_builder.py:342:                    "last_surface_match_date"
+production\feature_builder.py:344:                <= match_date
+production\feature_builder.py:350:            "last_surface_match_date"
+production\feature_builder.py:372:                match_date
+production\feature_builder.py:375:                    "last_surface_match_date"
+production\feature_builder.py:391:                match_date
+production\feature_builder.py:394:                    "last_surface_match_date"
+production\feature_builder.py:402:            match_date
+production\feature_builder.py:404:            a_state["match_date"]
+production\feature_builder.py:411:            match_date
+production\feature_builder.py:413:            b_state["match_date"]
+production\feature_builder.py:481:        match_date="2026-08-16"
+production\prediction_widget.py:41:        match_date = st.date_input(
+production\prediction_widget.py:105:        match_date=str(match_date)
+production\run_prediction.py:32:    match_date="2026-08-16"
+ingestion\build_h2h_engine.py:66:            "last_match_date": None
+ingestion\build_h2h_engine.py:78:    prev = overall[overall_key]["last_match_date"]
+ingestion\build_h2h_engine.py:81:        overall[overall_key]["last_match_date"] = current_date
+ingestion\build_h2h_engine.py:100:            "last_match_date": None
+ingestion\build_h2h_engine.py:110:    prev = surface_h2h[surface_key]["last_match_date"]
+ingestion\build_h2h_engine.py:113:        surface_h2h[surface_key]["last_match_date"] = current_date
+
+

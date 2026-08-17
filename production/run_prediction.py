@@ -1,13 +1,29 @@
 
+from services.player_lookup_service import (
+    get_player_id
+)
+
 from services.prediction_service import (
     predict_match
 )
 
+player_a = "Carlos Alcaraz"
+
+player_b = "Jannik Sinner"
+
+player_a_id = get_player_id(
+    player_a
+)
+
+player_b_id = get_player_id(
+    player_b
+)
+
 result = predict_match(
 
-    player_a_id="S0S1",
+    player_a_id=player_a_id,
 
-    player_b_id="N0AE",
+    player_b_id=player_b_id,
 
     tour="atp",
 
@@ -18,6 +34,9 @@ result = predict_match(
 
 print()
 
-print("RESULT")
+print(player_a)
+print(player_b)
+
+print()
 
 print(result)

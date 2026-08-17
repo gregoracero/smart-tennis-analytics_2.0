@@ -1,0 +1,1150 @@
+
+========================================================================================================================
+data/parquet/atp_matches_with_predictions.parquet
+========================================================================================================================
+
+ROWS: 23694
+
+COLUMNS:
+['match_id', 'player_a', 'player_b', 'tourney_level', 'surface', 'match_date', 'match_year', 'target', 'history_size_a', 'history_size_b', 'matches_available_a', 'matches_available_b', 'delta_history_size', 'rank_a', 'rank_b', 'delta_rank', 'rank_points_a', 'rank_points_b', 'delta_rank_points', 'age_a', 'age_b', 'delta_age', 'height_a', 'height_b', 'delta_height', 'is_left_handed_a', 'is_left_handed_b', 'matches_used_5_a', 'matches_used_5_b', 'delta_win_pct_5', 'delta_first_serve_in_pct_5', 'delta_first_serve_won_pct_5', 'delta_second_serve_won_pct_5', 'delta_service_points_won_pct_5', 'delta_return_points_won_pct_5', 'delta_break_conversion_pct_5', 'delta_bp_saved_pct_5', 'delta_tiebreak_win_pct_5', 'matches_used_10_a', 'matches_used_10_b', 'delta_win_pct_10', 'delta_first_serve_in_pct_10', 'delta_first_serve_won_pct_10', 'delta_second_serve_won_pct_10', 'delta_service_points_won_pct_10', 'delta_return_points_won_pct_10', 'delta_break_conversion_pct_10', 'delta_bp_saved_pct_10', 'delta_tiebreak_win_pct_10', 'matches_used_20_a', 'matches_used_20_b', 'delta_win_pct_20', 'delta_first_serve_in_pct_20', 'delta_first_serve_won_pct_20', 'delta_second_serve_won_pct_20', 'delta_service_points_won_pct_20', 'delta_return_points_won_pct_20', 'delta_break_conversion_pct_20', 'delta_bp_saved_pct_20', 'delta_tiebreak_win_pct_20', 'matches_used_50_a', 'matches_used_50_b', 'delta_win_pct_50', 'delta_first_serve_in_pct_50', 'delta_first_serve_won_pct_50', 'delta_second_serve_won_pct_50', 'delta_service_points_won_pct_50', 'delta_return_points_won_pct_50', 'delta_break_conversion_pct_50', 'delta_bp_saved_pct_50', 'delta_tiebreak_win_pct_50', 'player_a_id', 'player_b_id', 'k_factor', 'elo_a', 'elo_b', 'surface_elo_a', 'surface_elo_b', 'days_inactive_a', 'days_inactive_b', 'surface_days_inactive_a', 'surface_days_inactive_b', 'matches_played_a', 'matches_played_b', 'surface_matches_played_a', 'surface_matches_played_b', 'delta_elo', 'delta_surface_elo', 'delta_matches_played', 'delta_surface_matches_played', 'delta_inactivity_days', 'delta_surface_inactivity_days', 'a_key', 'b_key', 'pair_key', 'Date', 'Winner', 'Loser', 'Surface', 'Series', 'AvgW', 'AvgL', 'MaxW', 'MaxL', 'PSW', 'PSL', 'B365W', 'B365L', 'market_prob_winner', 'market_prob_loser', 'winner_key', 'loser_key', 'odds_id', 'day_diff', 'odds_a', 'odds_b', 'market_probability_a', 'market_probability_b', 'model_probability', 'edge']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+target
+--------------------------------------------------------------------------------
+count    23694.000000
+mean         0.500000
+std          0.500011
+min          0.000000
+25%          0.000000
+50%          0.500000
+75%          1.000000
+max          1.000000
+Name: target, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         1.870232
+std          1.749380
+min          1.000000
+25%          1.300000
+50%          1.570000
+75%          2.120000
+max        161.000000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         3.207597
+std          2.822611
+min          1.010000
+25%          1.710000
+50%          2.380000
+75%          3.470000
+max         34.680000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+PSW
+--------------------------------------------------------------------------------
+count    22324.000000
+mean         1.926812
+std          1.085409
+min          0.000000
+25%          1.320000
+50%          1.610000
+75%          2.190000
+max         30.500000
+Name: PSW, dtype: float64
+
+--------------------------------------------------------------------------------
+PSL
+--------------------------------------------------------------------------------
+count    22324.000000
+mean         3.545196
+std          3.988896
+min          0.000000
+25%          1.750000
+50%          2.460000
+75%          3.680000
+max         90.330000
+Name: PSL, dtype: float64
+
+--------------------------------------------------------------------------------
+B365W
+--------------------------------------------------------------------------------
+count    23582.000000
+mean         1.874794
+std          1.141680
+min          0.971000
+25%          1.300000
+50%          1.570000
+75%          2.100000
+max         34.000000
+Name: B365W, dtype: float64
+
+--------------------------------------------------------------------------------
+B365L
+--------------------------------------------------------------------------------
+count    23584.000000
+mean         3.299856
+std          3.348323
+min          0.967000
+25%          1.720000
+50%          2.380000
+75%          3.500000
+max         67.000000
+Name: B365L, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.621165
+std          0.194540
+min          0.006211
+25%          0.471698
+50%          0.636943
+75%          0.769231
+max          1.000000
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.434024
+std          0.195401
+min          0.028835
+25%          0.288184
+50%          0.420168
+75%          0.584795
+max          0.990099
+Name: market_prob_loser, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_a
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         2.538914
+std          2.441493
+min          1.000000
+25%          1.450000
+50%          1.890000
+75%          2.730000
+max        161.000000
+Name: odds_a, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_b
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         2.538914
+std          2.441493
+min          1.000000
+25%          1.450000
+50%          1.890000
+75%          2.730000
+max        161.000000
+Name: odds_b, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_a
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.500000
+std          0.205332
+min          0.014145
+25%          0.346062
+50%          0.500000
+75%          0.653938
+max          0.985855
+Name: market_probability_a, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_b
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.500000
+std          0.205332
+min          0.014145
+25%          0.346062
+50%          0.500000
+75%          0.653938
+max          0.985855
+Name: market_probability_b, dtype: float64
+
+--------------------------------------------------------------------------------
+model_probability
+--------------------------------------------------------------------------------
+count    23694.000000
+mean         0.500650
+std          0.334360
+min          0.000000
+25%          0.209153
+50%          0.502523
+75%          0.793973
+max          1.000000
+Name: model_probability, dtype: float64
+
+--------------------------------------------------------------------------------
+edge
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.000649
+std          0.268540
+min         -0.818171
+25%         -0.111905
+50%          0.001012
+75%          0.113304
+max          0.817758
+Name: edge, dtype: float64
+
+MODEL PROBABILITY QUANTILES
+0.01    0.001941
+0.05    0.008853
+0.10    0.012034
+0.25    0.209153
+0.50    0.502523
+0.75    0.793973
+0.90    0.986486
+0.95    0.992103
+0.99    0.997264
+Name: model_probability, dtype: float64
+
+EDGE QUANTILES
+0.01   -0.612373
+0.05   -0.492374
+0.10   -0.388787
+0.25   -0.111905
+0.50    0.001012
+0.75    0.113304
+0.90    0.388368
+0.95    0.491770
+0.99    0.611602
+Name: edge, dtype: float64
+
+========================================================================================================================
+data/parquet/atp_matches_with_predictions_nearest.parquet
+========================================================================================================================
+
+ROWS: 4124
+
+COLUMNS:
+['player_a', 'player_b', 'tourney_level', 'surface', 'match_date', 'match_year', 'target', 'history_size_a', 'history_size_b', 'matches_available_a', 'matches_available_b', 'delta_history_size', 'rank_a', 'rank_b', 'delta_rank', 'rank_points_a', 'rank_points_b', 'delta_rank_points', 'age_a', 'age_b', 'delta_age', 'height_a', 'height_b', 'delta_height', 'is_left_handed_a', 'is_left_handed_b', 'matches_used_5_a', 'matches_used_5_b', 'delta_win_pct_5', 'delta_first_serve_in_pct_5', 'delta_first_serve_won_pct_5', 'delta_second_serve_won_pct_5', 'delta_service_points_won_pct_5', 'delta_return_points_won_pct_5', 'delta_break_conversion_pct_5', 'delta_bp_saved_pct_5', 'delta_tiebreak_win_pct_5', 'matches_used_10_a', 'matches_used_10_b', 'delta_win_pct_10', 'delta_first_serve_in_pct_10', 'delta_first_serve_won_pct_10', 'delta_second_serve_won_pct_10', 'delta_service_points_won_pct_10', 'delta_return_points_won_pct_10', 'delta_break_conversion_pct_10', 'delta_bp_saved_pct_10', 'delta_tiebreak_win_pct_10', 'matches_used_20_a', 'matches_used_20_b', 'delta_win_pct_20', 'delta_first_serve_in_pct_20', 'delta_first_serve_won_pct_20', 'delta_second_serve_won_pct_20', 'delta_service_points_won_pct_20', 'delta_return_points_won_pct_20', 'delta_break_conversion_pct_20', 'delta_bp_saved_pct_20', 'delta_tiebreak_win_pct_20', 'matches_used_50_a', 'matches_used_50_b', 'delta_win_pct_50', 'delta_first_serve_in_pct_50', 'delta_first_serve_won_pct_50', 'delta_second_serve_won_pct_50', 'delta_service_points_won_pct_50', 'delta_return_points_won_pct_50', 'delta_break_conversion_pct_50', 'delta_bp_saved_pct_50', 'delta_tiebreak_win_pct_50', 'player_a_id', 'player_b_id', 'k_factor', 'elo_a', 'elo_b', 'surface_elo_a', 'surface_elo_b', 'days_inactive_a', 'days_inactive_b', 'surface_days_inactive_a', 'surface_days_inactive_b', 'matches_played_a', 'matches_played_b', 'surface_matches_played_a', 'surface_matches_played_b', 'delta_elo', 'delta_surface_elo', 'delta_matches_played', 'delta_surface_matches_played', 'delta_inactivity_days', 'delta_surface_inactivity_days', 'a_key', 'b_key', 'pair_key_x', 'lookup', 'Date', 'Winner', 'Loser', 'Surface', 'Series', 'AvgW', 'AvgL', 'MaxW', 'MaxL', 'PSW', 'PSL', 'B365W', 'B365L', 'market_prob_winner', 'market_prob_loser', 'winner_key', 'loser_key', 'pair_key_y', 'odds_a', 'odds_b', 'market_probability_a', 'market_probability_b', 'model_probability', 'edge']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+target
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.500000
+std         0.500061
+min         0.000000
+25%         0.000000
+50%         0.500000
+75%         1.000000
+max         1.000000
+Name: target, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        1.845078
+std         0.865619
+min         1.010000
+25%         1.330000
+50%         1.590000
+75%         2.120000
+max        12.480000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        3.202187
+std         3.161099
+min         1.040000
+25%         1.710000
+50%         2.325000
+75%         3.290000
+max        33.150000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+PSW
+--------------------------------------------------------------------------------
+count    3240.000000
+mean        1.922633
+std         0.968487
+min         1.005000
+25%         1.370000
+50%         1.660000
+75%         2.202500
+max        15.340000
+Name: PSW, dtype: float64
+
+--------------------------------------------------------------------------------
+PSL
+--------------------------------------------------------------------------------
+count    3240.000000
+mean        3.474142
+std         4.351490
+min         1.040000
+25%         1.740000
+50%         2.355000
+75%         3.350000
+max        54.440000
+Name: PSL, dtype: float64
+
+--------------------------------------------------------------------------------
+B365W
+--------------------------------------------------------------------------------
+count    4110.000000
+mean        1.854390
+std         0.894504
+min         0.971000
+25%         1.330000
+50%         1.570000
+75%         2.100000
+max        13.000000
+Name: B365W, dtype: float64
+
+--------------------------------------------------------------------------------
+B365L
+--------------------------------------------------------------------------------
+count    4112.000000
+mean        3.385963
+std         4.148951
+min         1.040000
+25%         1.720000
+50%         2.300000
+75%         3.400000
+max        51.000000
+Name: B365L, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.616414
+std         0.188565
+min         0.080128
+25%         0.471698
+50%         0.628931
+75%         0.751880
+max         0.990099
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.439802
+std         0.189931
+min         0.030166
+25%         0.303951
+50%         0.430110
+75%         0.584795
+max         0.961538
+Name: market_prob_loser, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_a
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        2.523632
+std         2.414844
+min         1.010000
+25%         1.460000
+50%         1.890000
+75%         2.680000
+max        33.150000
+Name: odds_a, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_b
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        2.523632
+std         2.414844
+min         1.010000
+25%         1.460000
+50%         1.890000
+75%         2.680000
+max        33.150000
+Name: odds_b, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_a
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.528108
+std         0.208842
+min         0.030166
+25%         0.373134
+50%         0.529101
+75%         0.684932
+max         0.990099
+Name: market_probability_a, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_b
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.528108
+std         0.208842
+min         0.030166
+25%         0.373134
+50%         0.529101
+75%         0.684932
+max         0.990099
+Name: market_probability_b, dtype: float64
+
+--------------------------------------------------------------------------------
+model_probability
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.500575
+std         0.347288
+min         0.000000
+25%         0.193912
+50%         0.503356
+75%         0.807871
+max         1.000000
+Name: model_probability, dtype: float64
+
+--------------------------------------------------------------------------------
+edge
+--------------------------------------------------------------------------------
+count    4124.000000
+mean       -0.027533
+std         0.288084
+min        -0.836289
+25%        -0.156258
+50%        -0.025780
+75%         0.098634
+max         0.783462
+Name: edge, dtype: float64
+
+MODEL PROBABILITY QUANTILES
+0.01    0.001811
+0.05    0.007101
+0.10    0.010209
+0.25    0.193912
+0.50    0.503356
+0.75    0.807871
+0.90    0.989891
+0.95    0.992364
+0.99    0.997264
+Name: model_probability, dtype: float64
+
+EDGE QUANTILES
+0.01   -0.681246
+0.05   -0.559329
+0.10   -0.434846
+0.25   -0.156258
+0.50   -0.025780
+0.75    0.098634
+0.90    0.377882
+0.95    0.503689
+0.99    0.622291
+Name: edge, dtype: float64
+
+========================================================================================================================
+data/parquet/atp_matches_with_nearest_odds.parquet
+========================================================================================================================
+
+ROWS: 23694
+
+COLUMNS:
+['match_id', 'player_a', 'player_b', 'tourney_level', 'surface', 'match_date', 'match_year', 'target', 'history_size_a', 'history_size_b', 'matches_available_a', 'matches_available_b', 'delta_history_size', 'rank_a', 'rank_b', 'delta_rank', 'rank_points_a', 'rank_points_b', 'delta_rank_points', 'age_a', 'age_b', 'delta_age', 'height_a', 'height_b', 'delta_height', 'is_left_handed_a', 'is_left_handed_b', 'matches_used_5_a', 'matches_used_5_b', 'delta_win_pct_5', 'delta_first_serve_in_pct_5', 'delta_first_serve_won_pct_5', 'delta_second_serve_won_pct_5', 'delta_service_points_won_pct_5', 'delta_return_points_won_pct_5', 'delta_break_conversion_pct_5', 'delta_bp_saved_pct_5', 'delta_tiebreak_win_pct_5', 'matches_used_10_a', 'matches_used_10_b', 'delta_win_pct_10', 'delta_first_serve_in_pct_10', 'delta_first_serve_won_pct_10', 'delta_second_serve_won_pct_10', 'delta_service_points_won_pct_10', 'delta_return_points_won_pct_10', 'delta_break_conversion_pct_10', 'delta_bp_saved_pct_10', 'delta_tiebreak_win_pct_10', 'matches_used_20_a', 'matches_used_20_b', 'delta_win_pct_20', 'delta_first_serve_in_pct_20', 'delta_first_serve_won_pct_20', 'delta_second_serve_won_pct_20', 'delta_service_points_won_pct_20', 'delta_return_points_won_pct_20', 'delta_break_conversion_pct_20', 'delta_bp_saved_pct_20', 'delta_tiebreak_win_pct_20', 'matches_used_50_a', 'matches_used_50_b', 'delta_win_pct_50', 'delta_first_serve_in_pct_50', 'delta_first_serve_won_pct_50', 'delta_second_serve_won_pct_50', 'delta_service_points_won_pct_50', 'delta_return_points_won_pct_50', 'delta_break_conversion_pct_50', 'delta_bp_saved_pct_50', 'delta_tiebreak_win_pct_50', 'player_a_id', 'player_b_id', 'k_factor', 'elo_a', 'elo_b', 'surface_elo_a', 'surface_elo_b', 'days_inactive_a', 'days_inactive_b', 'surface_days_inactive_a', 'surface_days_inactive_b', 'matches_played_a', 'matches_played_b', 'surface_matches_played_a', 'surface_matches_played_b', 'delta_elo', 'delta_surface_elo', 'delta_matches_played', 'delta_surface_matches_played', 'delta_inactivity_days', 'delta_surface_inactivity_days', 'a_key', 'b_key', 'pair_key', 'Date', 'Winner', 'Loser', 'Surface', 'Series', 'AvgW', 'AvgL', 'MaxW', 'MaxL', 'PSW', 'PSL', 'B365W', 'B365L', 'market_prob_winner', 'market_prob_loser', 'winner_key', 'loser_key', 'odds_id', 'day_diff', 'odds_a', 'odds_b', 'market_probability_a', 'market_probability_b']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+target
+--------------------------------------------------------------------------------
+count    23694.000000
+mean         0.500000
+std          0.500011
+min          0.000000
+25%          0.000000
+50%          0.500000
+75%          1.000000
+max          1.000000
+Name: target, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         1.870232
+std          1.749380
+min          1.000000
+25%          1.300000
+50%          1.570000
+75%          2.120000
+max        161.000000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         3.207597
+std          2.822611
+min          1.010000
+25%          1.710000
+50%          2.380000
+75%          3.470000
+max         34.680000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+PSW
+--------------------------------------------------------------------------------
+count    22324.000000
+mean         1.926812
+std          1.085409
+min          0.000000
+25%          1.320000
+50%          1.610000
+75%          2.190000
+max         30.500000
+Name: PSW, dtype: float64
+
+--------------------------------------------------------------------------------
+PSL
+--------------------------------------------------------------------------------
+count    22324.000000
+mean         3.545196
+std          3.988896
+min          0.000000
+25%          1.750000
+50%          2.460000
+75%          3.680000
+max         90.330000
+Name: PSL, dtype: float64
+
+--------------------------------------------------------------------------------
+B365W
+--------------------------------------------------------------------------------
+count    23582.000000
+mean         1.874794
+std          1.141680
+min          0.971000
+25%          1.300000
+50%          1.570000
+75%          2.100000
+max         34.000000
+Name: B365W, dtype: float64
+
+--------------------------------------------------------------------------------
+B365L
+--------------------------------------------------------------------------------
+count    23584.000000
+mean         3.299856
+std          3.348323
+min          0.967000
+25%          1.720000
+50%          2.380000
+75%          3.500000
+max         67.000000
+Name: B365L, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.621165
+std          0.194540
+min          0.006211
+25%          0.471698
+50%          0.636943
+75%          0.769231
+max          1.000000
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.434024
+std          0.195401
+min          0.028835
+25%          0.288184
+50%          0.420168
+75%          0.584795
+max          0.990099
+Name: market_prob_loser, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_a
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         2.538914
+std          2.441493
+min          1.000000
+25%          1.450000
+50%          1.890000
+75%          2.730000
+max        161.000000
+Name: odds_a, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_b
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         2.538914
+std          2.441493
+min          1.000000
+25%          1.450000
+50%          1.890000
+75%          2.730000
+max        161.000000
+Name: odds_b, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_a
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.500000
+std          0.205332
+min          0.014145
+25%          0.346062
+50%          0.500000
+75%          0.653938
+max          0.985855
+Name: market_probability_a, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_b
+--------------------------------------------------------------------------------
+count    23670.000000
+mean         0.500000
+std          0.205332
+min          0.014145
+25%          0.346062
+50%          0.500000
+75%          0.653938
+max          0.985855
+Name: market_probability_b, dtype: float64
+
+========================================================================================================================
+data/parquet/atp_matches_with_aligned_odds.parquet
+========================================================================================================================
+
+ROWS: 4124
+
+COLUMNS:
+['player_a', 'player_b', 'tourney_level', 'surface', 'match_date', 'match_year', 'target', 'history_size_a', 'history_size_b', 'matches_available_a', 'matches_available_b', 'delta_history_size', 'rank_a', 'rank_b', 'delta_rank', 'rank_points_a', 'rank_points_b', 'delta_rank_points', 'age_a', 'age_b', 'delta_age', 'height_a', 'height_b', 'delta_height', 'is_left_handed_a', 'is_left_handed_b', 'matches_used_5_a', 'matches_used_5_b', 'delta_win_pct_5', 'delta_first_serve_in_pct_5', 'delta_first_serve_won_pct_5', 'delta_second_serve_won_pct_5', 'delta_service_points_won_pct_5', 'delta_return_points_won_pct_5', 'delta_break_conversion_pct_5', 'delta_bp_saved_pct_5', 'delta_tiebreak_win_pct_5', 'matches_used_10_a', 'matches_used_10_b', 'delta_win_pct_10', 'delta_first_serve_in_pct_10', 'delta_first_serve_won_pct_10', 'delta_second_serve_won_pct_10', 'delta_service_points_won_pct_10', 'delta_return_points_won_pct_10', 'delta_break_conversion_pct_10', 'delta_bp_saved_pct_10', 'delta_tiebreak_win_pct_10', 'matches_used_20_a', 'matches_used_20_b', 'delta_win_pct_20', 'delta_first_serve_in_pct_20', 'delta_first_serve_won_pct_20', 'delta_second_serve_won_pct_20', 'delta_service_points_won_pct_20', 'delta_return_points_won_pct_20', 'delta_break_conversion_pct_20', 'delta_bp_saved_pct_20', 'delta_tiebreak_win_pct_20', 'matches_used_50_a', 'matches_used_50_b', 'delta_win_pct_50', 'delta_first_serve_in_pct_50', 'delta_first_serve_won_pct_50', 'delta_second_serve_won_pct_50', 'delta_service_points_won_pct_50', 'delta_return_points_won_pct_50', 'delta_break_conversion_pct_50', 'delta_bp_saved_pct_50', 'delta_tiebreak_win_pct_50', 'player_a_id', 'player_b_id', 'k_factor', 'elo_a', 'elo_b', 'surface_elo_a', 'surface_elo_b', 'days_inactive_a', 'days_inactive_b', 'surface_days_inactive_a', 'surface_days_inactive_b', 'matches_played_a', 'matches_played_b', 'surface_matches_played_a', 'surface_matches_played_b', 'delta_elo', 'delta_surface_elo', 'delta_matches_played', 'delta_surface_matches_played', 'delta_inactivity_days', 'delta_surface_inactivity_days', 'a_key', 'b_key', 'pair_key_x', 'lookup', 'Date', 'Winner', 'Loser', 'Surface', 'Series', 'AvgW', 'AvgL', 'MaxW', 'MaxL', 'PSW', 'PSL', 'B365W', 'B365L', 'market_prob_winner', 'market_prob_loser', 'winner_key', 'loser_key', 'pair_key_y', 'odds_a', 'odds_b', 'market_probability_a', 'market_probability_b']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+target
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.500000
+std         0.500061
+min         0.000000
+25%         0.000000
+50%         0.500000
+75%         1.000000
+max         1.000000
+Name: target, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        1.845078
+std         0.865619
+min         1.010000
+25%         1.330000
+50%         1.590000
+75%         2.120000
+max        12.480000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        3.202187
+std         3.161099
+min         1.040000
+25%         1.710000
+50%         2.325000
+75%         3.290000
+max        33.150000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+PSW
+--------------------------------------------------------------------------------
+count    3240.000000
+mean        1.922633
+std         0.968487
+min         1.005000
+25%         1.370000
+50%         1.660000
+75%         2.202500
+max        15.340000
+Name: PSW, dtype: float64
+
+--------------------------------------------------------------------------------
+PSL
+--------------------------------------------------------------------------------
+count    3240.000000
+mean        3.474142
+std         4.351490
+min         1.040000
+25%         1.740000
+50%         2.355000
+75%         3.350000
+max        54.440000
+Name: PSL, dtype: float64
+
+--------------------------------------------------------------------------------
+B365W
+--------------------------------------------------------------------------------
+count    4110.000000
+mean        1.854390
+std         0.894504
+min         0.971000
+25%         1.330000
+50%         1.570000
+75%         2.100000
+max        13.000000
+Name: B365W, dtype: float64
+
+--------------------------------------------------------------------------------
+B365L
+--------------------------------------------------------------------------------
+count    4112.000000
+mean        3.385963
+std         4.148951
+min         1.040000
+25%         1.720000
+50%         2.300000
+75%         3.400000
+max        51.000000
+Name: B365L, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.616414
+std         0.188565
+min         0.080128
+25%         0.471698
+50%         0.628931
+75%         0.751880
+max         0.990099
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.439802
+std         0.189931
+min         0.030166
+25%         0.303951
+50%         0.430110
+75%         0.584795
+max         0.961538
+Name: market_prob_loser, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_a
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        2.523632
+std         2.414844
+min         1.010000
+25%         1.460000
+50%         1.890000
+75%         2.680000
+max        33.150000
+Name: odds_a, dtype: float64
+
+--------------------------------------------------------------------------------
+odds_b
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        2.523632
+std         2.414844
+min         1.010000
+25%         1.460000
+50%         1.890000
+75%         2.680000
+max        33.150000
+Name: odds_b, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_a
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.528108
+std         0.208842
+min         0.030166
+25%         0.373134
+50%         0.529101
+75%         0.684932
+max         0.990099
+Name: market_probability_a, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability_b
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.528108
+std         0.208842
+min         0.030166
+25%         0.373134
+50%         0.529101
+75%         0.684932
+max         0.990099
+Name: market_probability_b, dtype: float64
+
+========================================================================================================================
+data/parquet/atp_matches_with_odds.parquet
+========================================================================================================================
+
+ROWS: 4124
+
+COLUMNS:
+['player_a', 'player_b', 'tourney_level', 'surface', 'match_date', 'match_year', 'target', 'history_size_a', 'history_size_b', 'matches_available_a', 'matches_available_b', 'delta_history_size', 'rank_a', 'rank_b', 'delta_rank', 'rank_points_a', 'rank_points_b', 'delta_rank_points', 'age_a', 'age_b', 'delta_age', 'height_a', 'height_b', 'delta_height', 'is_left_handed_a', 'is_left_handed_b', 'matches_used_5_a', 'matches_used_5_b', 'delta_win_pct_5', 'delta_first_serve_in_pct_5', 'delta_first_serve_won_pct_5', 'delta_second_serve_won_pct_5', 'delta_service_points_won_pct_5', 'delta_return_points_won_pct_5', 'delta_break_conversion_pct_5', 'delta_bp_saved_pct_5', 'delta_tiebreak_win_pct_5', 'matches_used_10_a', 'matches_used_10_b', 'delta_win_pct_10', 'delta_first_serve_in_pct_10', 'delta_first_serve_won_pct_10', 'delta_second_serve_won_pct_10', 'delta_service_points_won_pct_10', 'delta_return_points_won_pct_10', 'delta_break_conversion_pct_10', 'delta_bp_saved_pct_10', 'delta_tiebreak_win_pct_10', 'matches_used_20_a', 'matches_used_20_b', 'delta_win_pct_20', 'delta_first_serve_in_pct_20', 'delta_first_serve_won_pct_20', 'delta_second_serve_won_pct_20', 'delta_service_points_won_pct_20', 'delta_return_points_won_pct_20', 'delta_break_conversion_pct_20', 'delta_bp_saved_pct_20', 'delta_tiebreak_win_pct_20', 'matches_used_50_a', 'matches_used_50_b', 'delta_win_pct_50', 'delta_first_serve_in_pct_50', 'delta_first_serve_won_pct_50', 'delta_second_serve_won_pct_50', 'delta_service_points_won_pct_50', 'delta_return_points_won_pct_50', 'delta_break_conversion_pct_50', 'delta_bp_saved_pct_50', 'delta_tiebreak_win_pct_50', 'player_a_id', 'player_b_id', 'k_factor', 'elo_a', 'elo_b', 'surface_elo_a', 'surface_elo_b', 'days_inactive_a', 'days_inactive_b', 'surface_days_inactive_a', 'surface_days_inactive_b', 'matches_played_a', 'matches_played_b', 'surface_matches_played_a', 'surface_matches_played_b', 'delta_elo', 'delta_surface_elo', 'delta_matches_played', 'delta_surface_matches_played', 'delta_inactivity_days', 'delta_surface_inactivity_days', 'a_key', 'b_key', 'pair_key', 'lookup', 'AvgW', 'AvgL', 'market_prob_winner', 'market_prob_loser']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+target
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.500000
+std         0.500061
+min         0.000000
+25%         0.000000
+50%         0.500000
+75%         1.000000
+max         1.000000
+Name: target, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        1.845078
+std         0.865619
+min         1.010000
+25%         1.330000
+50%         1.590000
+75%         2.120000
+max        12.480000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        3.202187
+std         3.161099
+min         1.040000
+25%         1.710000
+50%         2.325000
+75%         3.290000
+max        33.150000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.616414
+std         0.188565
+min         0.080128
+25%         0.471698
+50%         0.628931
+75%         0.751880
+max         0.990099
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.439802
+std         0.189931
+min         0.030166
+25%         0.303951
+50%         0.430110
+75%         0.584795
+max         0.961538
+Name: market_prob_loser, dtype: float64
+
+========================================================================================================================
+data/parquet/atp_matches_with_odds_predictions.parquet
+========================================================================================================================
+
+ROWS: 4124
+
+COLUMNS:
+['player_a', 'player_b', 'tourney_level', 'surface', 'match_date', 'match_year', 'target', 'history_size_a', 'history_size_b', 'matches_available_a', 'matches_available_b', 'delta_history_size', 'rank_a', 'rank_b', 'delta_rank', 'rank_points_a', 'rank_points_b', 'delta_rank_points', 'age_a', 'age_b', 'delta_age', 'height_a', 'height_b', 'delta_height', 'is_left_handed_a', 'is_left_handed_b', 'matches_used_5_a', 'matches_used_5_b', 'delta_win_pct_5', 'delta_first_serve_in_pct_5', 'delta_first_serve_won_pct_5', 'delta_second_serve_won_pct_5', 'delta_service_points_won_pct_5', 'delta_return_points_won_pct_5', 'delta_break_conversion_pct_5', 'delta_bp_saved_pct_5', 'delta_tiebreak_win_pct_5', 'matches_used_10_a', 'matches_used_10_b', 'delta_win_pct_10', 'delta_first_serve_in_pct_10', 'delta_first_serve_won_pct_10', 'delta_second_serve_won_pct_10', 'delta_service_points_won_pct_10', 'delta_return_points_won_pct_10', 'delta_break_conversion_pct_10', 'delta_bp_saved_pct_10', 'delta_tiebreak_win_pct_10', 'matches_used_20_a', 'matches_used_20_b', 'delta_win_pct_20', 'delta_first_serve_in_pct_20', 'delta_first_serve_won_pct_20', 'delta_second_serve_won_pct_20', 'delta_service_points_won_pct_20', 'delta_return_points_won_pct_20', 'delta_break_conversion_pct_20', 'delta_bp_saved_pct_20', 'delta_tiebreak_win_pct_20', 'matches_used_50_a', 'matches_used_50_b', 'delta_win_pct_50', 'delta_first_serve_in_pct_50', 'delta_first_serve_won_pct_50', 'delta_second_serve_won_pct_50', 'delta_service_points_won_pct_50', 'delta_return_points_won_pct_50', 'delta_break_conversion_pct_50', 'delta_bp_saved_pct_50', 'delta_tiebreak_win_pct_50', 'player_a_id', 'player_b_id', 'k_factor', 'elo_a', 'elo_b', 'surface_elo_a', 'surface_elo_b', 'days_inactive_a', 'days_inactive_b', 'surface_days_inactive_a', 'surface_days_inactive_b', 'matches_played_a', 'matches_played_b', 'surface_matches_played_a', 'surface_matches_played_b', 'delta_elo', 'delta_surface_elo', 'delta_matches_played', 'delta_surface_matches_played', 'delta_inactivity_days', 'delta_surface_inactivity_days', 'a_key', 'b_key', 'pair_key', 'lookup', 'AvgW', 'AvgL', 'market_prob_winner', 'market_prob_loser', 'model_probability', 'market_probability', 'edge']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+target
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.500000
+std         0.500061
+min         0.000000
+25%         0.000000
+50%         0.500000
+75%         1.000000
+max         1.000000
+Name: target, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        1.845078
+std         0.865619
+min         1.010000
+25%         1.330000
+50%         1.590000
+75%         2.120000
+max        12.480000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        3.202187
+std         3.161099
+min         1.040000
+25%         1.710000
+50%         2.325000
+75%         3.290000
+max        33.150000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.616414
+std         0.188565
+min         0.080128
+25%         0.471698
+50%         0.628931
+75%         0.751880
+max         0.990099
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.439802
+std         0.189931
+min         0.030166
+25%         0.303951
+50%         0.430110
+75%         0.584795
+max         0.961538
+Name: market_prob_loser, dtype: float64
+
+--------------------------------------------------------------------------------
+model_probability
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.500575
+std         0.347288
+min         0.000000
+25%         0.193912
+50%         0.503356
+75%         0.807871
+max         1.000000
+Name: model_probability, dtype: float64
+
+--------------------------------------------------------------------------------
+market_probability
+--------------------------------------------------------------------------------
+count    4124.000000
+mean        0.616414
+std         0.188565
+min         0.080128
+25%         0.471698
+50%         0.628931
+75%         0.751880
+max         0.990099
+Name: market_probability, dtype: float64
+
+--------------------------------------------------------------------------------
+edge
+--------------------------------------------------------------------------------
+count    4124.000000
+mean       -0.115839
+std         0.395268
+min        -0.990099
+25%        -0.421941
+50%        -0.059061
+75%         0.152618
+max         0.783462
+Name: edge, dtype: float64
+
+MODEL PROBABILITY QUANTILES
+0.01    0.001811
+0.05    0.007101
+0.10    0.010209
+0.25    0.193912
+0.50    0.503356
+0.75    0.807871
+0.90    0.989891
+0.95    0.992364
+0.99    0.997264
+Name: model_probability, dtype: float64
+
+EDGE QUANTILES
+0.01   -0.952444
+0.05   -0.803111
+0.10   -0.692810
+0.25   -0.421941
+0.50   -0.059061
+0.75    0.152618
+0.90    0.401691
+0.95    0.508493
+0.99    0.629471
+Name: edge, dtype: float64
+
+========================================================================================================================
+data/parquet/atp_odds_2020_2026.parquet
+========================================================================================================================
+
+ROWS: 15161
+
+COLUMNS:
+['Date', 'Winner', 'Loser', 'Surface', 'Series', 'AvgW', 'AvgL', 'MaxW', 'MaxL', 'PSW', 'PSL', 'B365W', 'B365L', 'market_prob_winner', 'market_prob_loser']
+
+DESCRIBE
+
+--------------------------------------------------------------------------------
+AvgW
+--------------------------------------------------------------------------------
+count    15146.000000
+mean         1.867232
+std          1.625915
+min          1.000000
+25%          1.300000
+50%          1.570000
+75%          2.120000
+max        161.000000
+Name: AvgW, dtype: float64
+
+--------------------------------------------------------------------------------
+AvgL
+--------------------------------------------------------------------------------
+count    15146.000000
+mean         3.251090
+std          2.846457
+min          1.010000
+25%          1.710000
+50%          2.400000
+75%          3.530000
+max         34.680000
+Name: AvgL, dtype: float64
+
+--------------------------------------------------------------------------------
+PSW
+--------------------------------------------------------------------------------
+count    14345.000000
+mean         1.928136
+std          1.151171
+min          0.000000
+25%          1.320000
+50%          1.610000
+75%          2.190000
+max         32.020000
+Name: PSW, dtype: float64
+
+--------------------------------------------------------------------------------
+PSL
+--------------------------------------------------------------------------------
+count    14345.000000
+mean         3.598830
+std          3.992785
+min          0.000000
+25%          1.750000
+50%          2.480000
+75%          3.740000
+max         90.330000
+Name: PSL, dtype: float64
+
+--------------------------------------------------------------------------------
+B365W
+--------------------------------------------------------------------------------
+count    15097.000000
+mean         1.873076
+std          1.147212
+min          0.000000
+25%          1.300000
+50%          1.570000
+75%          2.100000
+max         34.000000
+Name: B365W, dtype: float64
+
+--------------------------------------------------------------------------------
+B365L
+--------------------------------------------------------------------------------
+count    15098.000000
+mean         3.352194
+std          3.396662
+min          0.000000
+25%          1.720000
+50%          2.380000
+75%          3.500000
+max         67.000000
+Name: B365L, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_winner
+--------------------------------------------------------------------------------
+count    15146.000000
+mean         0.623443
+std          0.196481
+min          0.006211
+25%          0.471698
+50%          0.636943
+75%          0.769231
+max          1.000000
+Name: market_prob_winner, dtype: float64
+
+--------------------------------------------------------------------------------
+market_prob_loser
+--------------------------------------------------------------------------------
+count    15146.000000
+mean         0.431597
+std          0.197403
+min          0.028835
+25%          0.283286
+50%          0.416667
+75%          0.584795
+max          0.990099
+Name: market_prob_loser, dtype: float64

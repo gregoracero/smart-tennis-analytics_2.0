@@ -127,6 +127,28 @@ def build_features(
             ]
         ).days
 
+    print()
+    
+    if len(a_surface):
+
+        print(
+            "A SURFACE DATE:",
+            a_surface.iloc[0][
+                "last_surface_match_date"
+            ]
+        )
+
+    if len(b_surface):
+
+        print(
+            "B SURFACE DATE:",
+            b_surface.iloc[0][
+                "last_surface_match_date"
+            ]
+        )
+
+    print("=" * 80)
+
     days_inactive_a = (
         match_date
         -
@@ -189,10 +211,266 @@ def build_features(
         }
     ])
 
+def build_features_historical(
+    player_a_id,
+    player_b_id,
+    surface,
+    match_date
+):
+
+    match_date = pd.to_datetime(
+        match_date
+    )
+
+    a_state = (
+
+        player_state[
+
+            (
+                player_state["player_id"]
+                == player_a_id
+            )
+
+            &
+
+            (
+                player_state["match_date"]
+                <= match_date
+            )
+
+        ]
+
+        .sort_values(
+            "match_date"
+        )
+
+    )
+
+    if len(a_state) == 0:
+
+        raise ValueError(
+            f"No historical state found for {player_a_id}"
+        )
+
+    a_state = a_state.iloc[-1]
+
+    b_state = (
+
+        player_state[
+
+            (
+                player_state["player_id"]
+                == player_b_id
+            )
+
+            &
+
+            (
+                player_state["match_date"]
+                <= match_date
+            )
+
+        ]
+
+        .sort_values(
+            "match_date"
+        )
+
+    )
+
+    if len(b_state) == 0:
+
+        raise ValueError(
+            f"No historical state found for {player_b_id}"
+        )
+
+    b_state = b_state.iloc[-1]
+
+    a_surface = (
+
+        surface_state[
+
+            (
+                surface_state["player_id"]
+                == player_a_id
+            )
+
+            &
+
+            (
+                surface_state["surface"]
+                == surface
+            )
+
+            &
+
+            (
+                surface_state[
+                    "last_surface_match_date"
+                ]
+                <= match_date
+            )
+
+        ]
+
+        .sort_values(
+            "last_surface_match_date"
+        )
+
+    )
+
+    b_surface = (
+
+        surface_state[
+
+            (
+                surface_state["player_id"]
+                == player_b_id
+            )
+
+            &
+
+            (
+                surface_state["surface"]
+                == surface
+            )
+
+            &
+
+            (
+                surface_state[
+                    "last_surface_match_date"
+                ]
+                <= match_date
+            )
+
+        ]
+
+        .sort_values(
+            "last_surface_match_date"
+        )
+
+    )
+
+    surface_elo_a = None
+    surface_elo_b = None
+
+    surface_days_a = None
+    surface_days_b = None
+
+    if len(a_surface) > 0:
+
+        a_surface = a_surface.iloc[-1]
+
+        surface_elo_a = (
+            a_surface["surface_elo"]
+        )
+
+        surface_days_a = max(
+            0,
+            (
+                match_date
+                -
+                a_surface[
+                    "last_surface_match_date"
+                ]
+            ).days
+        )
+
+    if len(b_surface) > 0:
+
+        b_surface = b_surface.iloc[-1]
+
+        surface_elo_b = (
+            b_surface["surface_elo"]
+        )
+
+        surface_days_b = max(
+            0,
+            (
+                match_date
+                -
+                b_surface[
+                    "last_surface_match_date"
+                ]
+            ).days
+        )
+
+    days_inactive_a = max(
+        0,
+        (
+            match_date
+            -
+            a_state["match_date"]
+        ).days
+    )
+
+    days_inactive_b = max(
+        0,
+        (
+            match_date
+            -
+            b_state["match_date"]
+        ).days
+    )
+
+    return pd.DataFrame([
+        {
+
+            "player_a_id":
+                player_a_id,
+
+            "player_b_id":
+                player_b_id,
+
+            "elo_a":
+                a_state["elo"],
+
+            "elo_b":
+                b_state["elo"],
+
+            "surface_elo_a":
+                surface_elo_a,
+
+            "surface_elo_b":
+                surface_elo_b,
+
+            "days_inactive_a":
+                days_inactive_a,
+
+            "days_inactive_b":
+                days_inactive_b,
+
+            "surface_days_inactive_a":
+                surface_days_a,
+
+            "surface_days_inactive_b":
+                surface_days_b,
+
+            "delta_elo":
+                a_state["elo"]
+                -
+                b_state["elo"],
+
+            "delta_inactivity_days":
+                days_inactive_a
+                -
+                days_inactive_b,
+
+            "delta_surface_inactivity_days":
+                (
+                    surface_days_a or 0
+                )
+                -
+                (
+                    surface_days_b or 0
+                )
+        }
+    ])
 
 if __name__ == "__main__":
 
-    df = build_features(
+    df = build_features_historical(
 
         player_a_id="S0S1",
 

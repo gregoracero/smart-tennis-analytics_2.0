@@ -1,0 +1,110 @@
+
+====================================================================================================
+atp_matches_with_predictions_nearest
+====================================================================================================
+
+betting\backtest_roi.py:5:    "data/parquet/atp_matches_with_predictions_nearest.parquet"
+betting\generate_model_probabilities_aligned.py:156:    "atp_matches_with_predictions_nearest.parquet"
+production\analyze_market_vs_model.py:5:    "data/parquet/atp_matches_with_predictions_nearest.parquet"
+production\analyze_unique_match_roi.py:5:    "data/parquet/atp_matches_with_predictions_nearest.parquet"
+
+
+
+
+====================================================================================================
+model_probability
+====================================================================================================
+
+betting\backtest_roi_temporal.py:129:pred_split["model_probability"] = (
+betting\backtest_roi_temporal.py:134:    pred_split["model_probability"]
+betting\backtest_roi_temporal.py:162:    pred_split["model_probability"]
+betting\backtest_roi_temporal.py:230:            "model_probability",
+betting\backtest_roi_temporal.py:247:    tmp["model_probability"],
+betting\backtest_roi_temporal.py:255:        predicted=("model_probability", "mean"),
+betting\generate_model_probabilities.py:153:pred_df["model_probability"] = (
+betting\generate_model_probabilities.py:168:        "model_probability"
+betting\generate_model_probabilities.py:193:            "model_probability",
+betting\generate_model_probabilities_aligned.py:135:pred_df["model_probability"] = (
+betting\generate_model_probabilities_aligned.py:144:        "model_probability"
+betting\generate_model_probabilities_aligned.py:172:            "model_probability",
+betting\generate_model_probabilities_aligned.py:182:    pred_df["model_probability"]
+betting\generate_model_probabilities_aligned.py:197:        ["model_probability","market_probability_a"]
+ml\walk_forward_roi_elo_readiness.py:114:    test_split["model_probability"] = (
+ml\walk_forward_roi_elo_readiness.py:121:        test_split["model_probability"]
+production\analyze_market_vs_model.py:18:    df["model_probability"] >= 0.5
+production\analyze_market_vs_model.py:65:    model_bets["model_probability"] >= 0.5
+production\analyze_real_roi.py:32:        df["model_probability"]
+production\analyze_unique_match_roi.py:20:        "model_probability",
+production\analyze_unique_match_roi.py:122:        picks["model_probability"]
+production\analyze_unique_match_roi.py:157:                bets["model_probability"].mean(),
+tests\ablation\walk_forward_validation.py:183:        "model_probability"
+tests\ablation\walk_forward_validation.py:191:        test_odds["model_probability"]
+tests\calibration\extreme_calibration.py:21:    df["model_probability"],
+tests\calibration\extreme_calibration.py:31:        predicted=("model_probability","mean"),
+tests\hypothesis\challenger_clay_top5.py:171:bets["model_probability"] = probabilities
+tests\hypothesis\challenger_clay_top5.py:174:    bets["model_probability"]
+tests\hypothesis\challenger_grass_top5.py:171:bets["model_probability"] = probabilities
+tests\hypothesis\challenger_grass_top5.py:174:    bets["model_probability"]
+tests\hypothesis\challenger_hard_top5.py:171:bets["model_probability"] = probabilities
+tests\hypothesis\challenger_hard_top5.py:174:    bets["model_probability"]
+tests\hypothesis\clay_top5_model.py:175:bets["model_probability"] = probabilities
+tests\hypothesis\clay_top5_model.py:178:    bets["model_probability"]
+tests\hypothesis\grass_top5_model.py:175:bets["model_probability"] = probabilities
+tests\hypothesis\grass_top5_model.py:178:    bets["model_probability"]
+tests\hypothesis\top5_features_model.py:175:bets["model_probability"] = probabilities
+tests\hypothesis\top5_features_model.py:178:    bets["model_probability"]
+tests\robustness\roi_model_penalty.py:24:        tmp["model_probability"]
+tests\robustness\sample_underdogs.py:42:        "model_probability",
+tests\robustness\top_underdogs.py:50:            "model_probability",
+tests\robustness\walk_forward_roi_elo_only.py:100:    test_split["model_probability"] = (
+tests\robustness\walk_forward_roi_elo_only.py:107:        test_split["model_probability"]
+tests\robustness\walk_forward_roi_experience_only.py:97:    test_split["model_probability"] = (
+tests\robustness\walk_forward_roi_experience_only.py:102:        test_split["model_probability"]
+tests\robustness\walk_forward_roi_readiness_only.py:116:    test_split["model_probability"] = (
+tests\robustness\walk_forward_roi_readiness_only.py:123:        test_split["model_probability"]
+
+
+
+
+====================================================================================================
+to_parquet
+====================================================================================================
+
+analysis\prediction_engine.py:29:df.to_parquet(
+betting\backtest_roi_temporal.py:147:pred_split.to_parquet(output)
+betting\build_atp_matches_with_aligned_odds.py:157:merged.to_parquet(
+betting\build_atp_matches_with_nearest_odds.py:142:best.to_parquet(output)
+betting\build_atp_matches_with_odds.py:134:merged.to_parquet(
+betting\build_odds_master.py:119:master.to_parquet(
+betting\generate_model_probabilities.py:178:pred_df.to_parquet(
+betting\generate_model_probabilities_aligned.py:159:pred_df.to_parquet(
+ingestion\analyze_data_coverage.py:53:result.to_parquet(
+ingestion\build_all_matches.py:110:result.to_parquet(
+ingestion\build_analytics_matches.py:19:analytics.to_parquet(
+ingestion\build_analytics_player_matches.py:171:result.to_parquet(
+ingestion\build_h2h_engine.py:147:overall_df.to_parquet(
+ingestion\build_h2h_engine.py:152:surface_df.to_parquet(
+ingestion\build_h2h_matches.py:47:out.to_parquet(
+ingestion\build_master_matches.py:97:current.to_parquet(
+ingestion\build_player_matches.py:101:result.to_parquet(
+ingestion\build_player_metrics.py:489:result.to_parquet(
+ingestion\build_rolling_metrics.py:109:result.to_parquet(
+ingestion\build_signal_engine.py:71:df.to_parquet(
+ingestion\build_surface_metrics.py:79:metrics.to_parquet(
+ingestion\enrich_tiebreaks.py:41:df.to_parquet(
+ml\build_player_elo.py:693:elo_history.to_parquet(
+ml\build_player_lookup.py:106:lookup.to_parquet(
+ml\build_player_state.py:83:state.to_parquet(
+ml\build_player_surface_last_match.py:69:surface_state.to_parquet(
+ml\build_training_matches.py:638:training_df.to_parquet(
+ml\build_training_with_elo.py:330:df.to_parquet(
+ml\build_training_with_player_ids.py:81:df.to_parquet(
+production\build_player_state.py:83:state.to_parquet(
+production\build_player_surface_last_match.py:69:surface_state.to_parquet(
+production\build_player_surface_state.py:69:surface_state.to_parquet(
+production\build_prediction_features.py:158:features.to_parquet(
+tests\hypothesis\build_top5_unique_matches.py:40:unique.to_parquet(
+tests\hypothesis\generate_top5_predictions.py:109:test_df.to_parquet(
+tests\hypothesis\generate_top5_temporal_predictions.py:94:df.to_parquet(
+
+

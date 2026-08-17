@@ -1,0 +1,726 @@
+
+========================================================================================================================
+betting/generate_model_probabilities_aligned.py
+========================================================================================================================
+
+
+import pandas as pd
+
+from xgboost import XGBClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.calibration import CalibratedClassifierCV
+
+TARGET = "target"
+
+train_df = pd.read_parquet(
+    "data/parquet/training_matches_with_elo.parquet"
+)
+
+pred_df = pd.read_parquet(
+    "data/parquet/atp_matches_with_aligned_odds.parquet"
+)
+
+train_df["match_date"] = pd.to_datetime(
+    train_df["match_date"]
+)
+
+#
+# ATP ONLY
+#
+
+train_df = train_df[
+    train_df["tourney_level"] != "C"
+].copy()
+
+DROP_COLS = [
+
+    "player_a",
+    "player_b",
+
+    "surface",
+
+    "match_date",
+
+    "tourney_level",
+
+    TARGET
+]
+
+features = [
+
+    c
+
+    for c in train_df.columns
+
+    if c not in DROP_COLS
+]
+
+X_train = (
+    train_df[
+        features
+    ]
+    .select_dtypes(
+        include=["number"]
+    )
+)
+
+y_train = train_df[TARGET]
+
+imputer = SimpleImputer(
+    strategy="median"
+)
+
+X_train = imputer.fit_transform(
+    X_train
+)
+
+base_model = XGBClassifier(
+
+    n_estimators=300,
+    max_depth=4,
+    learning_rate=0.05,
+
+    subsample=0.8,
+    colsample_bytree=0.8,
+
+    random_state=42,
+    eval_metric="logloss"
+)
+
+model = CalibratedClassifierCV(
+    base_model,
+    method="isotonic",
+    cv=3
+)
+
+print()
+print("Training calibrated model...")
+
+model.fit(
+    X_train,
+    y_train
+)
+
+numeric_features = (
+    train_df[features]
+    .select_dtypes(include=["number"])
+    .columns
+    .tolist()
+)
+
+for col in numeric_features:
+    if col not in pred_df.columns:
+        pred_df[col] = pd.NA
+
+X_pred = pred_df[numeric_features]
+
+print("\nTRAIN FEATURES")
+print(len(features))
+
+print("\nPRED COLUMNS NOT IN TRAIN")
+print(set(pred_df.columns) - set(features))
+
+print("\nTRAIN FEATURES MISSING IN PRED")
+print(set(features) - set(pred_df.columns))
+
+numeric_features = list(imputer.feature_names_in_)
+
+X_pred = pd.DataFrame(
+
+    imputer.transform(
+        pred_df[numeric_features]
+    ),
+
+    columns=numeric_features
+)
+
+print()
+print("Generating probabilities...")
+
+pred_df["model_probability"] = (
+    model.predict_proba(
+        X_pred
+    )[:,1]
+)
+
+pred_df["edge"] = (
+
+    pred_df[
+        "model_probability"
+    ]
+
+    -
+
+    pred_df[
+        "market_probability_a"
+    ]
+)
+
+output = (
+    "data/parquet/"
+    "atp_matches_with_predictions_nearest.parquet"
+)
+
+pred_df.to_parquet(
+    output
+)
+
+print()
+print("ROWS")
+print(len(pred_df))
+
+print()
+print(
+    pred_df[
+        [
+            "target",
+            "model_probability",
+            "market_probability_a",
+            "edge"
+        ]
+    ].head()
+)
+
+print()
+
+print(
+    pred_df["model_probability"]
+    .describe()
+)
+
+print()
+
+print(
+    pred_df["market_probability_a"]
+    .describe()
+)
+
+print()
+
+print(
+    pred_df[
+        ["model_probability","market_probability_a"]
+    ].corr()
+)
+
+print()
+print("Saved:", output)
+
+
+========================================================================================================================
+betting/backtest_roi_temporal.py
+========================================================================================================================
+
+import pandas as pd
+
+from xgboost import XGBClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.calibration import CalibratedClassifierCV
+
+TARGET = "target"
+TRAIN_END = "2023-01-01"
+
+print()
+print("Loading datasets...")
+
+train_df = pd.read_parquet(
+    "data/parquet/training_matches_with_elo.parquet"
+)
+
+pred_df = pd.read_parquet(
+    "data/parquet/atp_matches_with_nearest_odds.parquet"
+)
+
+train_df["match_date"] = pd.to_datetime(
+    train_df["match_date"]
+)
+
+pred_df["match_date"] = pd.to_datetime(
+    pred_df["match_date"]
+)
+
+#
+# ATP only
+#
+train_df = train_df[
+    train_df["tourney_level"] != "C"
+].copy()
+
+#
+# Temporal split
+#
+train_split = train_df[
+    train_df["match_date"] < TRAIN_END
+].copy()
+
+pred_split = pred_df[
+    pred_df["match_date"] >= TRAIN_END
+].copy()
+
+print()
+print("TRAIN ROWS:", len(train_split))
+print("TEST ROWS :", len(pred_split))
+
+#
+# Features
+#
+DROP_COLS = [
+    "player_a",
+    "player_b",
+    "surface",
+    "match_date",
+    "tourney_level",
+    TARGET
+]
+
+features = [
+    c
+    for c in train_split.columns
+    if c not in DROP_COLS
+]
+
+X_train = (
+    train_split[features]
+    .select_dtypes(include=["number"])
+)
+
+feature_cols = X_train.columns.tolist()
+
+y_train = train_split[TARGET]
+
+#
+# Imputer
+#
+imputer = SimpleImputer(
+    strategy="median"
+)
+
+X_train = imputer.fit_transform(
+    X_train
+)
+
+#
+# Model
+#
+base_model = XGBClassifier(
+    n_estimators=300,
+    max_depth=4,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    random_state=42,
+    eval_metric="logloss"
+)
+
+model = CalibratedClassifierCV(
+    base_model,
+    method="isotonic",
+    cv=3
+)
+
+print()
+print("Training model...")
+
+model.fit(
+    X_train,
+    y_train
+)
+
+#
+# Prediction
+#
+X_pred = pd.DataFrame(
+    imputer.transform(
+        pred_split[feature_cols]
+    ),
+    columns=feature_cols
+)
+
+print()
+print("Generating probabilities...")
+
+pred_split["model_probability"] = (
+    model.predict_proba(X_pred)[:, 1]
+)
+
+pred_split["edge"] = (
+    pred_split["model_probability"]
+    -
+    pred_split["market_probability_a"]
+)
+
+#
+# Save temporal predictions
+#
+output = (
+    "data/parquet/"
+    "temporal_predictions_2023_plus.parquet"
+)
+
+pred_split.to_parquet(output)
+
+print()
+print("Saved:", output)
+print("ROWS :", len(pred_split))
+
+#
+# Diagnostics
+#
+print()
+print("=" * 80)
+print("MODEL PROBABILITY")
+print("=" * 80)
+
+print(
+    pred_split["model_probability"]
+    .describe(
+        percentiles=[
+            0.01,
+            0.05,
+            0.10,
+            0.25,
+            0.50,
+            0.75,
+            0.90,
+            0.95,
+            0.99
+        ]
+    )
+)
+
+print()
+print("=" * 80)
+print("MARKET PROBABILITY")
+print("=" * 80)
+
+print(
+    pred_split["market_probability_a"]
+    .describe(
+        percentiles=[
+            0.01,
+            0.05,
+            0.10,
+            0.25,
+            0.50,
+            0.75,
+            0.90,
+            0.95,
+            0.99
+        ]
+    )
+)
+
+print()
+print("=" * 80)
+print("EDGE")
+print("=" * 80)
+
+print(
+    pred_split["edge"]
+    .describe(
+        percentiles=[
+            0.01,
+            0.05,
+            0.10,
+            0.25,
+            0.50,
+            0.75,
+            0.90,
+            0.95,
+            0.99
+        ]
+    )
+)
+
+print()
+print("=" * 80)
+print("CORRELATION")
+print("=" * 80)
+
+print(
+    pred_split[
+        [
+            "model_probability",
+            "market_probability_a"
+        ]
+    ].corr()
+)
+
+#
+# Calibration table
+#
+print()
+print("=" * 80)
+print("CALIBRATION TABLE")
+print("=" * 80)
+
+tmp = pred_split.copy()
+
+tmp["bucket"] = pd.qcut(
+    tmp["model_probability"],
+    10,
+    duplicates="drop"
+)
+
+calibration = (
+    tmp.groupby("bucket")
+    .agg(
+        predicted=("model_probability", "mean"),
+        actual=("target", "mean"),
+        n=("target", "size")
+    )
+)
+
+print(calibration)
+
+#
+# ROI
+#
+thresholds = [
+    0.03,
+    0.05,
+    0.08,
+    0.10
+]
+
+print()
+print("=" * 80)
+print("TEMPORAL ROI BACKTEST")
+print("=" * 80)
+
+for threshold in thresholds:
+
+    bets = pred_split[
+        pred_split["edge"] > threshold
+    ].copy()
+
+    if len(bets) == 0:
+        continue
+
+    bets["profit"] = bets.apply(
+        lambda r:
+        r["odds_a"] - 1
+        if r["target"] == 1
+        else -1,
+        axis=1
+    )
+
+    total_bets = len(bets)
+
+    wins = (
+        bets["target"] == 1
+    ).sum()
+
+    hit_rate = wins / total_bets
+
+    total_profit = bets["profit"].sum()
+
+    roi = total_profit / total_bets
+
+    print()
+    print(f"EDGE > {threshold:.0%}")
+    print("-" * 40)
+    print("BETS     :", total_bets)
+    print("WINS     :", wins)
+    print("HIT RATE :", f"{hit_rate:.2%}")
+    print("PROFIT   :", round(total_profit, 2))
+    print("ROI      :", f"{roi:.2%}")
+
+print()
+print("=" * 80)
+print("FINISHED")
+print("=" * 80)
+
+========================================================================================================================
+ml/walk_forward_roi_elo_readiness.py
+========================================================================================================================
+
+
+import pandas as pd
+
+from xgboost import XGBClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.calibration import CalibratedClassifierCV
+
+TARGET = "target"
+EDGE = 0.05
+
+train_df = pd.read_parquet(
+    "data/parquet/training_matches_with_elo.parquet"
+)
+
+odds_df = pd.read_parquet(
+    "data/parquet/atp_matches_with_nearest_odds.parquet"
+)
+
+train_df["match_date"] = pd.to_datetime(
+    train_df["match_date"]
+)
+
+odds_df["match_date"] = pd.to_datetime(
+    odds_df["match_date"]
+)
+
+train_df = train_df[
+    train_df["tourney_level"] != "C"
+].copy()
+
+FEATURES = [
+
+    "elo_a",
+    "elo_b",
+
+    "surface_elo_a",
+    "surface_elo_b",
+
+    "delta_elo",
+    "delta_surface_elo",
+
+    "days_inactive_a",
+    "days_inactive_b",
+
+    "surface_days_inactive_a",
+    "surface_days_inactive_b",
+
+    "delta_inactivity_days",
+    "delta_surface_inactivity_days"
+]
+
+YEARS = [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+]
+
+results = []
+
+print()
+print("=" * 80)
+print("ROI ELO ONLY")
+print("=" * 80)
+
+for year in YEARS:
+
+    train_split = train_df[
+        train_df["match_date"].dt.year < year
+    ]
+
+    test_split = odds_df[
+        odds_df["match_date"].dt.year == year
+    ].copy()
+
+    if len(test_split) == 0:
+        continue
+
+    X_train = train_split[FEATURES]
+    y_train = train_split[TARGET]
+
+    imputer = SimpleImputer(
+        strategy="median"
+    )
+
+    X_train = imputer.fit_transform(
+        X_train
+    )
+
+    X_test = imputer.transform(
+        test_split[FEATURES]
+    )
+
+    model = CalibratedClassifierCV(
+        XGBClassifier(
+            n_estimators=300,
+            max_depth=4,
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            random_state=42,
+            eval_metric="logloss"
+        ),
+        method="isotonic",
+        cv=3
+    )
+
+    model.fit(
+        X_train,
+        y_train
+    )
+
+    test_split["model_probability"] = (
+        model.predict_proba(
+            X_test
+        )[:,1]
+    )
+
+    test_split["edge"] = (
+        test_split["model_probability"]
+        -
+        test_split["market_probability_a"]
+    )
+
+    bets = test_split[
+        test_split["edge"] > EDGE
+    ].copy()
+
+    bets["profit"] = bets.apply(
+        lambda r:
+        r["odds_a"] - 1
+        if r["target"] == 1
+        else -1,
+        axis=1
+    )
+
+    roi = (
+        bets["profit"].sum()
+        /
+        len(bets)
+    )
+
+    hit = (
+        bets["target"].mean()
+    )
+
+    results.append({
+        "year": year,
+        "bets": len(bets),
+        "hit_rate": round(hit,4),
+        "roi": round(roi,4)
+    })
+
+    print()
+    print(year)
+    print("BETS:", len(bets))
+    print("ROI :", round(roi*100,2), "%")
+
+results_df = pd.DataFrame(
+    results
+)
+
+output = (
+    "ml/reports/"
+    "walk_forward_roi_elo_only.csv"
+)
+
+results_df.to_csv(
+    output,
+    index=False
+)
+
+print()
+print(results_df)
+
+print()
+print("MEAN ROI")
+print(
+    round(
+        results_df["roi"].mean()*100,
+        2
+    ),
+    "%"
+)
+
+print()
+print("Saved:")
+print(output)

@@ -3,11 +3,57 @@ import streamlit as st
 from utils.player_metrics_runtime import (
     build_player_metrics
 )
+from production.prediction_widget import (
+    render_prediction
+)
+from production.daily_picks_widget import (
+    render_daily_picks
+)
+from production.matchstat_debug_widget import (
+    render_matchstat_debug
+)
+
+from pathlib import Path
+
+ROOT = (
+    Path(__file__)
+    .resolve()
+    .parent
+    .parent
+)
 
 st.set_page_config(
     page_title="Smart Tennis Analytics",
     layout="wide"
 )
+mode = st.sidebar.radio(
+    "Mode",
+    [
+        "Analytics",
+        "Prediction",
+        "Daily Picks",
+        "Matchstat Debug"
+    ]
+)
+
+if mode == "Prediction":
+
+    render_prediction()
+
+    st.stop()
+
+if mode == "Daily Picks":
+
+    render_daily_picks()
+
+    st.stop()
+    
+if mode == "Matchstat Debug":
+
+    render_matchstat_debug()
+
+    st.stop()
+
 
 LEVEL_MAPPING = {
     "Grand Slam": ["G"],
@@ -20,12 +66,24 @@ LEVEL_MAPPING = {
     "Olympic Games": ["O"]
 }
 
-PLAYER_METRICS = "data/parquet/player_metrics.parquet"
-H2H_OVERALL = "data/parquet/h2h_overall.parquet"
-H2H_SURFACE = "data/parquet/h2h_surface.parquet"
-H2H_MATCHES = "data/parquet/h2h_matches.parquet"
+PLAYER_METRICS = (
+    ROOT / "data/parquet/player_metrics.parquet"
+)
+
+H2H_OVERALL = (
+    ROOT / "data/parquet/h2h_overall.parquet"
+)
+
+H2H_SURFACE = (
+    ROOT / "data/parquet/h2h_surface.parquet"
+)
+
+H2H_MATCHES = (
+    ROOT / "data/parquet/h2h_matches.parquet"
+)
+
 PLAYER_MATCHES = (
-    "data/parquet/analytics_player_matches.parquet"
+    ROOT / "data/parquet/analytics_player_matches.parquet"
 )
 
 
