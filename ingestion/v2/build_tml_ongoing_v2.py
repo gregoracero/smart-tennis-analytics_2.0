@@ -40,6 +40,22 @@ for file in files:
                 file,
                 low_memory=False
             )
+            
+            # ------------------------------------------------
+            # NORMALIZE DATES
+            # ------------------------------------------------
+
+            if "tourney_date" in df.columns:
+
+                df["tourney_date"] = pd.to_datetime(
+                    df["tourney_date"]
+                    .astype(str)
+                    .str.extract(r"(\d{8})")[0],
+                    format="%Y%m%d",
+                    errors="coerce"
+                )
+            
+            
 
         df["source_file"] = file.name
 
