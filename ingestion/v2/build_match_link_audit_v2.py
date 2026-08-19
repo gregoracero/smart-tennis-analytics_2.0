@@ -205,6 +205,9 @@ for idx, (_, row) in enumerate(
 
     matched_tournament = None
 
+    tml_round = None
+    tml_score = None
+
     if status == "MATCHED":
 
         for tournament_name in mapped_tournaments:
@@ -246,30 +249,106 @@ for idx, (_, row) in enumerate(
 
             status = "MATCHED"
 
+            tml_round = (
+                candidates[0]["round"]
+            )
+
+            tml_score = (
+                candidates[0]["score"]
+            )
+
         else:
 
-            candidate_df = pd.DataFrame(candidates)
+            candidate_df = pd.DataFrame(
+                candidates
+            )
 
-            # ¿son realmente duplicados?
-            duplicate_cols = [
-                "tourney_id",
+            business_cols = [
+
                 "winner_name",
                 "loser_name",
                 "score",
-                "round",
-                "tourney_date"
+                "round"
+
             ]
 
-            if (
-                candidate_df[duplicate_cols]
+            unique_business_matches = (
+
+                candidate_df[
+                    business_cols
+                ]
                 .drop_duplicates()
-                .shape[0]
-                == 1
-            ):
-                status = "DUPLICATE_CANDIDATES"
+
+            )
+
+            if len(
+                unique_business_matches
+            ) == 1:
+
+                print()
+
+                print(
+                    "[DUPLICATE]",
+                    row["Tournament"],
+                    "|",
+                    row["Winner"],
+                    "vs",
+                    row["Loser"]
+                )
+
+                status = (
+                    "DUPLICATE_CANDIDATES"
+                )
 
             else:
-                status = "VALID_MULTIPLE_MATCH"
+
+                status = (
+                    "VALID_MULTIPLE_MATCH"
+                )
+
+                for candidate in candidates:
+
+                    rows.append({
+
+                        "year":
+                            row["match_year"],
+
+                        "surface":
+                            row["Surface"],
+
+                        "td_tournament":
+                            row["Tournament"],
+
+                        "tml_tournament":
+                            matched_tournament,
+
+                        "winner_td":
+                            row["Winner"],
+
+                        "loser_td":
+                            row["Loser"],
+
+                        "winner_player_key":
+                            winner_key,
+
+                        "loser_player_key":
+                            loser_key,
+
+                        "tml_round":
+                            candidate["round"],
+
+                        "tml_score":
+                            candidate["score"],
+
+                        "candidate_matches":
+                            len(candidates),
+
+                        "status":
+                            status
+
+                    })
+
+                continue
 
     rows.append({
 
@@ -296,6 +375,12 @@ for idx, (_, row) in enumerate(
 
         "loser_player_key":
             loser_key,
+
+        "tml_round":
+            tml_round,
+
+        "tml_score":
+            tml_score,
 
         "candidate_matches":
             len(candidates),

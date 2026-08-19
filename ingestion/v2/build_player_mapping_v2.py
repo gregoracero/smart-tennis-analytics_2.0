@@ -425,11 +425,25 @@ result = pd.DataFrame(rows)
 # ==========================================================
 
 MANUAL_PLAYER_OVERRIDES = [
+
+    {
+        "player_key": "zhang_ze",
+        "tennis_data_name": "Zhang Ze",
+        "tml_name": "Ze Zhang"
+    },
+
+    {
+        "player_key": "zhang_zhizhen",
+        "tennis_data_name": "Zhang Zh.",
+        "tml_name": "Zhizhen Zhang"
+    },
+
     {
         "player_key": "srichaphan_p",
         "tennis_data_name": "Srichaphan N.",
         "tml_name": "Paradorn Srichaphan"
     },
+
     {
         "player_key": "wang_y",
         "tennis_data_name": "Wang Y. Jr.",
@@ -520,6 +534,28 @@ result = result.sort_values(
         "tml_name"
     ]
 )
+
+# ==========================================================
+# MANUAL REJECTS
+# ==========================================================
+
+MANUAL_REJECTS = {
+
+    ("Zhang Ze", "Zhizhen Zhang"),
+    ("Zhang Ze.", "Zhizhen Zhang"),
+    ("Zhang Zh.", "Ze Zhang"),
+
+}
+
+result = result[
+    ~result.apply(
+        lambda r: (
+            r["tennis_data_name"],
+            r["tml_name"]
+        ) in MANUAL_REJECTS,
+        axis=1
+    )
+]
 
 # ==========================================================
 # SAVE

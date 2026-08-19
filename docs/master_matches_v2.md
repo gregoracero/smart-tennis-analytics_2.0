@@ -2,11 +2,11 @@
 
 ## Objetivo
 
-Construir el dataset maestro del proyecto:
+Construir el Single Point Of Truth del proyecto Smart Tennis Analytics.
 
-master_matches_v2.parquet
+Output:
 
-Este dataset será el Single Point Of Truth de Smart Tennis Analytics.
+data/parquet/v2/master_matches_v2.parquet
 
 ---
 
@@ -22,21 +22,15 @@ Este dataset será el Single Point Of Truth de Smart Tennis Analytics.
 - player_mapping_v2.parquet
 - tournament_mapping_v2.parquet
 
-### Matching Source
+### Audit Source
 
 - match_link_audit_v2.parquet
 
 ---
 
-## Output
-
-data/parquet/v2/master_matches_v2.parquet
-
----
-
 ## Registros incluidos
 
-Se incluirán únicamente los partidos con estado:
+Estados incluidos:
 
 - MATCHED
 - VALID_MULTIPLE_MATCH
@@ -52,84 +46,97 @@ Estados excluidos:
 
 ---
 
-## Estrategia
-
-build_master_matches_v2 NO realizará matching.
-
-Consumirá directamente:
-
-match_link_audit_v2.parquet
-
-como fuente oficial de linkado entre Tennis Data y TML.
-
----
-
 ## Identidad Canónica
 
 ### Torneo
 
-Procedente de:
-
-tournament_mapping_v2.parquet
-
-Columnas:
-
 - tournament_id
 - tournament_key
 
+Procedente de tournament_mapping_v2.
+
 ### Jugadores
-
-Procedente de:
-
-player_mapping_v2.parquet
-
-Columnas:
 
 - winner_player_key
 - loser_player_key
 
-Estas claves serán la identidad oficial de jugador dentro del proyecto.
+Procedente de player_mapping_v2.
+
+---
+
+## Match Linking
+
+El matching NO se realiza en este proceso.
+
+Se consume directamente:
+
+match_link_audit_v2.parquet
+
+como fuente oficial de correspondencia entre Tennis Data y TML.
+
+---
+
+## Valid Multiple Match
+
+Los casos VALID_MULTIPLE_MATCH representan partidos legítimos donde existen múltiples encuentros válidos entre los mismos jugadores dentro del mismo torneo y temporada.
+
+Ejemplos:
+
+- ATP Finals
+- Masters Cup
+- Round Robin + Final
+
+Estos registros se materializan individualmente utilizando:
+
+- tml_round
+- tml_score
+
+para identificar el candidato exacto.
 
 ---
 
 ## Master Match Id
 
-Generar un identificador estable y reproducible:
+Generado mediante SHA1:
 
-master_match_id
+year
+tournament_key
+winner_player_key
+loser_player_key
+tml_round
+tml_score
 
-Basado en:
+Objetivo:
 
-- season
+- estabilidad
+- reproducibilidad
+- unicidad
+
+Resultado validado:
+
+ROWS   : 68.220
+UNIQUE : 68.220
+
+---
+
+## Estructura
+
+### Canonical Layer
+
+- master_match_id
+- tournament_id
 - tournament_key
 - winner_player_key
 - loser_player_key
 
-Implementación recomendada:
-
-SHA1(
-  season +
-  tournament_key +
-  winner_player_key +
-  loser_player_key
-)
-
----
-
-## Columnas de Auditoría
-
-Conservar:
+### Audit Layer
 
 - match_link_status
 - candidate_matches
 
----
+### Tennis Data Layer
 
-## Datos Tennis Data
-
-Todas las columnas originales de Tennis Data serán incluidas.
-
-Prefijo:
+Todas las columnas originales con prefijo:
 
 td_
 
@@ -137,104 +144,66 @@ Ejemplos:
 
 - td_Tournament
 - td_Surface
-- td_Date
 - td_Winner
 - td_Loser
-- td_WRank
-- td_LRank
 
-etc.
+### TML Layer
 
----
-
-## Datos TML
-
-Todas las columnas originales de TML serán incluidas.
-
-Prefijo:
+Todas las columnas originales con prefijo:
 
 tml_
 
 Ejemplos:
 
 - tml_tourney_name
-- tml_surface
-- tml_winner_name
-- tml_loser_name
-- tml_winner_rank
-- tml_loser_rank
+- tml_round
 - tml_score
-
-etc.
-
----
-
-## Principios de Diseño
-
-1. No perder columnas originales.
-2. No aplicar reglas de precedencia en V2.
-3. Mantener trazabilidad completa.
-4. Mantener capacidad de auditoría.
-5. Utilizar identificadores canónicos de jugador y torneo.
-6. Dataset preparado para Feature Engineering, ELO y Modelos Predictivos.
+- tml_winner_rank
 
 ---
 
-## Flujo
+## Calidad de Datos
 
-tennis_data_co_uk_v2
-                \
-                 \
-                  --> match_link_audit_v2
-                 /
-                /
+Master Matches V2
 
-tml_v2
+- Rows: 68.220
+- Columns: 124
+- Unique Match IDs: 68.220
 
-        |
-        v
-
-build_master_matches_v2
-
-        |
-        v
-
-master_matches_v2.parquet
+Duplicados eliminados mediante master_match_id.
 
 ---
 
-## Pipeline
+## Arquitectura
 
-Fuentes
-+-- tennis-data.co.uk
+Raw Sources
++-- Tennis Data
 +-- TML
 
-Ingesta
-+-- downloader_tennis_data_v2
-+-- build_tml_v2
-+-- build_tennis_data_co_uk_v2
+Mappings
++-- Player Mapping
++-- Tournament Mapping
 
-Normalización
-+-- build_tournament_mapping_v2
-+-- build_player_mapping_v2
-
-Matching
-+-- build_match_link_audit_v2
+Audit
++-- Match Link Audit
 
 Master Layer
-+-- build_master_matches_v2
++-- Master Matches V2
 
 ---
 
-## Estado Actual del Matching
+## Estado
 
-MATCHED:
-68.199
+? tennis_data_co_uk_v2
 
-Cobertura:
-99,90%
+? tml_v2
 
-VALID_MULTIPLE_MATCH:
-18
+? player_mapping_v2
 
-Los NO_MATCH restantes son mayoritariamente históricos y no bloquean la construcción del Master Layer.
+? tournament_mapping_v2
+
+? match_link_audit_v2
+
+? master_matches_v2
+
+Master Layer finalizada.
