@@ -1,5 +1,38 @@
-
+﻿
 # Secrets
 .streamlit/secrets.toml
 .env
+# Local environments and caches
+.venv*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+# Local secrets
+.env.*
+!.env.example
+# Local quarantine
+_quarantine/
+# Runtime caches
+data/cache/
+data/upcoming/
+data/processed/upcoming_matches_cache.parquet
+data/processed/upcoming_matches_classification_audit.parquet
+data/processed/upcoming_market_odds.oddsharvester.parquet
+# Generated data and model artifacts
+data/raw/
+data/processed/*.parquet
+modeling/artifacts/
+# Temporary and rebuild files
+*.new.parquet
+*.before_rebuild.parquet
+*.tmp
+*.temp
+# Local inventories
+data_inventory_*.csv
 
+# Generated processed datasets and reports
+data/processed/**
+!data/processed/.gitkeep
