@@ -32,3 +32,7 @@ modeling/artifacts/
 *.temp
 # Local inventories
 data_inventory_*.csv
+
+# Generated processed datasets and reports
+data/processed/**
+!data/processed/.gitkeep
