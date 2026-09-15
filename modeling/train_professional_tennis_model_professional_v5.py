@@ -273,6 +273,17 @@ def prepare_dataset(
     keep_constant_features: bool,
 ) -> DatasetParts:
     metadata = load_json(metadata_path)
+    metadata_schema = str(metadata.get("schema_version", "")).strip()
+    feature_profile = str(metadata.get("feature_profile", "")).strip()
+    if not metadata_schema:
+        raise ValueError("Metadata sin schema_version")
+    if not feature_profile:
+        raise ValueError("Metadata sin feature_profile")
+    if feature_profile == "v6_all" and not metadata_schema.startswith("sackmann_v6_"):
+        raise ValueError(
+            "Metadata incompatible: feature_profile=v6_all requiere un "
+            f"schema_version sackmann_v6_*, recibido={metadata_schema!r}"
+        )
     columns = set(pq.ParquetFile(path).schema_arrow.names)
     required = {TARGET, DATE, SPLIT}
     if required - columns:
@@ -733,7 +744,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Benchmark profesional temporal de tenis")
     parser.add_argument("--mode", choices=["no_market", "with_market"], default="no_market")
     parser.add_argument("--dataset")
-    parser.add_argument("--metadata", default=str(processed / "tennis_ml_dataset_metadata_sackmann_v4.json"))
+    parser.add_argument("--metadata", default=str(processed / "tennis_ml_dataset_metadata.v6_all.sackmann_v5.json"))
     parser.add_argument("--output-root", default=str(root / "modeling" / "artifacts" / "candidate_professional_v5"))
     parser.add_argument("--models", default="catboost,xgboost,logistic")
     parser.add_argument("--trials", type=int, default=0, help="Alias para trials de ambos boosters")
@@ -760,9 +771,9 @@ def main() -> None:
     started = time.time()
     root = find_project_root(Path(__file__).resolve().parent)
     default_dataset = root / "data" / "processed" / (
-        "tennis_ml_no_market.sackmann_v4.parquet"
+        "tennis_ml_no_market.v6_all.sackmann_v5.parquet"
         if args.mode == "no_market"
-        else "tennis_ml_with_market.sackmann_v4.parquet"
+        else "tennis_ml_with_market.v6_all.sackmann_v5.parquet"
     )
     dataset = Path(args.dataset).resolve() if args.dataset else default_dataset.resolve()
     metadata_path = Path(args.metadata).resolve()
@@ -959,6 +970,11 @@ def main() -> None:
         "champion_selected_on_tune": champion,
         "probability_policy_selected_on_calibration": policy,
         "dataset_fingerprint": file_fingerprint(dataset),
+        "dataset_metadata_path": str(metadata_path),
+        "dataset_schema_version": parts.metadata.get("schema_version"),
+        "feature_profile": parts.metadata.get("feature_profile"),
+        "feature_families": parts.metadata.get("feature_families", []),
+        "feature_builder_manifest": parts.metadata.get("feature_builder_manifest"),
         "rows": {
             "train": len(parts.train), "tune": len(parts.tune),
             "calibration": len(parts.calibration), "test": len(parts.test),
@@ -990,6 +1006,10 @@ def main() -> None:
         "features": parts.features,
         "categoricals": parts.categoricals,
         "mode": args.mode,
+        "dataset_schema_version": parts.metadata.get("schema_version"),
+        "feature_profile": parts.metadata.get("feature_profile"),
+        "feature_families": parts.metadata.get("feature_families", []),
+        "feature_builder_manifest": parts.metadata.get("feature_builder_manifest"),
         "calibration_thresholds": {
             "minimum_logloss_gain": MIN_CALIBRATION_LOGLOSS_GAIN,
             "minimum_brier_gain": MIN_CALIBRATION_BRIER_GAIN,

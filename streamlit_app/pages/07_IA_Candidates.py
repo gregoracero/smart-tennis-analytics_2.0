@@ -1264,9 +1264,21 @@ if fixtures.empty:
 
 fixtures = fixtures.copy()
 fixtures["match_date"] = pd.to_datetime(fixtures["match_date"], errors="coerce").dt.date
-fixtures = fixtures.loc[fixtures["match_date"].ge(date.today())].copy()
-fixtures = fixtures.loc[fixtures.get("competition_type", "").isin(["ATP", "ATP_QUALIFYING", "CHALLENGER"])].copy()
+handoff = st.session_state.get("ia_candidate_selection")
+handoff_fixture = handoff.get("fixture") if isinstance(handoff, dict) else None
+if isinstance(handoff_fixture, dict):
+    handoff_frame = pd.DataFrame([handoff_fixture])
+    handoff_frame["match_date"] = pd.to_datetime(
+        handoff_frame["match_date"], errors="coerce"
+    ).dt.date
+    fixtures = pd.concat([fixtures, handoff_frame], ignore_index=True, sort=False)
+fixtures = fixtures.loc[
+    fixtures.get("competition_type", "").isin(["ATP", "ATP_QUALIFYING", "CHALLENGER"])
+].copy()
 fixtures["fixture_key"] = fixtures.apply(stable_fixture_key, axis=1)
+if not isinstance(handoff_fixture, dict):
+    fixtures = fixtures.loc[fixtures["match_date"].ge(date.today())].copy()
+fixtures = fixtures.drop_duplicates("fixture_key", keep="last")
 fixtures["label"] = fixtures.apply(
     lambda row: (
         f"{row.get('match_date')} · {row.get('scheduled_time', 'TBD')} · "
@@ -1301,7 +1313,15 @@ if visible.empty:
     st.warning("No hay partidos para los filtros actuales.")
     st.stop()
 
-selected_label = st.selectbox("Partido", visible["label"].tolist())
+labels = visible["label"].tolist()
+handoff_key = str(handoff.get("fixture_key", "")) if isinstance(handoff, dict) else ""
+selected_index = 0
+if handoff_key:
+    matching = visible.index[visible["fixture_key"].astype(str).eq(handoff_key)].tolist()
+    if matching:
+        selected_label_value = str(visible.loc[matching[0], "label"])
+        selected_index = labels.index(selected_label_value)
+selected_label = st.selectbox("Partido", labels, index=selected_index)
 fixture = visible.loc[visible["label"].eq(selected_label)].iloc[0]
 fixture_key = str(fixture["fixture_key"])
 dossiers: dict[str, Any] = st.session_state["ia_candidate_dossiers"]
@@ -1316,11 +1336,21 @@ with left:
     generate = st.button("Generate AI dossier", type="primary", use_container_width=True)
     refresh_dossier = st.button("Regenerate dossier", use_container_width=True)
 
-if generate or refresh_dossier:
+auto_generate = bool(
+    isinstance(handoff, dict)
+    and handoff.get("auto_generate")
+    and handoff_key == fixture_key
+    and fixture_key not in dossiers
+)
+if generate or refresh_dossier or auto_generate:
     with st.spinner("Consultando histórico, H2H, superficie, torneo y modelo..."):
         dossiers[fixture_key] = generate_dossier(fixture, lookup)
         st.session_state["ia_candidate_dossiers"] = dossiers
         save_disk_dossiers(dossiers)
+    if isinstance(handoff, dict):
+        updated_handoff = dict(handoff)
+        updated_handoff["auto_generate"] = False
+        st.session_state["ia_candidate_selection"] = updated_handoff
     st.rerun()
 
 dossier = dossiers.get(fixture_key)

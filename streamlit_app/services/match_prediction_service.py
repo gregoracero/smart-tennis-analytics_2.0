@@ -1283,6 +1283,25 @@ def _extract_match_prices(item: dict[str, Any]) -> tuple[float, float]:
     return first, second
 
 
+def _provider_result(
+    value: Any,
+    *,
+    reason: str,
+    source: str,
+    **extra: Any,
+) -> dict[str, Any]:
+    """Normalize provider outputs so public integration functions never return None."""
+    if isinstance(value, dict):
+        return value
+    return {
+        "available": False,
+        "reason": reason,
+        "source": source,
+        "returned_type": type(value).__name__,
+        **extra,
+    }
+
+
 def _request_json(
     url: str,
     api_key: str,
@@ -1301,11 +1320,20 @@ def _request_json(
     )
     if response.status_code in {401, 403}:
         raise PermissionError(
-            "The odds endpoint is not enabled for the configured RapidAPI plan/host "
-            f"(HTTP {response.status_code})."
+            "The Tennis API endpoint is not enabled for the configured "
+            f"RapidAPI plan/host (HTTP {response.status_code})."
         )
+    # Keep HTTP 429 as requests.HTTPError. Upcoming Matches uses the status code
+    # to activate SofaScore and stop further Tennis API calls for that action.
     response.raise_for_status()
-    return response.json()
+    try:
+        return response.json()
+    except ValueError as error:
+        raise requests.JSONDecodeError(
+            "Tennis API returned a non-JSON response",
+            response.text,
+            0,
+        ) from error
 
 
 def fetch_upcoming_market_odds(
@@ -1430,4 +1458,323 @@ def fetch_upcoming_market_odds(
         "reason": "market_odds_unavailable",
         "diagnostics": diagnostics,
         "filters": filters,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tennis-API score, extend-event and odds-movement integration
+# ---------------------------------------------------------------------------
+def _api_objects(payload: Any) -> list[dict[str, Any]]:
+    """Flatten common Tennis-API response envelopes into record dictionaries."""
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if not isinstance(payload, dict):
+        return []
+    for key in ("data", "result", "results", "items", "matches", "events", "odds"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+        if isinstance(value, dict):
+            nested = _api_objects(value)
+            if nested:
+                return nested
+    return [payload] if payload else []
+
+
+def _api_first(record: dict[str, Any], paths: tuple[str, ...], default: Any = None) -> Any:
+    for path in paths:
+        value = _nested_value(record, path, None)
+        if value not in (None, ""):
+            return value
+    return default
+
+
+def fetch_tournament_results(
+    *,
+    season_id: Any,
+    api_key: str,
+    host: str,
+    tour_type: str = "atp",
+) -> list[dict[str, Any]]:
+    """Return the completed-result archive for one tournament edition."""
+    numeric = pd.to_numeric(season_id, errors="coerce")
+    if pd.isna(numeric):
+        raise ValueError(f"Invalid tournament season id: {season_id!r}")
+    payload = _request_json(
+        f"https://{host}/tennis/v2/{tour_type.lower()}/tournament/results/{int(numeric)}",
+        api_key,
+        host,
+    )
+    return _api_objects(payload)
+
+
+def _score_component(value: Any) -> str:
+    """Render scalar or structured score values without leaking Python dicts."""
+    if value in (None, ""):
+        return ""
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        return str(int(value)) if float(value).is_integer() else str(value)
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
+def _score_from_result_record(item: dict[str, Any]) -> str:
+    direct = _api_first(
+        item,
+        ("result", "score", "finalScore", "final_score", "displayScore"),
+        "",
+    )
+    if isinstance(direct, str) and direct.strip():
+        return direct.strip()
+
+    home_score = _api_first(item, ("homeScore", "home_score"), {})
+    away_score = _api_first(item, ("awayScore", "away_score"), {})
+    if isinstance(home_score, dict) and isinstance(away_score, dict):
+        home_periods = home_score.get("periods", {})
+        away_periods = away_score.get("periods", {})
+        if isinstance(home_periods, dict) and isinstance(away_periods, dict):
+            sets: list[str] = []
+            period_keys = sorted(
+                {
+                    key for key in [*home_periods.keys(), *away_periods.keys()]
+                    if re.fullmatch(r"period\d+", str(key))
+                },
+                key=lambda key: int(re.search(r"\d+", str(key)).group()),
+            )
+            for key in period_keys:
+                home = _score_component(home_periods.get(key))
+                away = _score_component(away_periods.get(key))
+                if home and away:
+                    token = f"{home}-{away}"
+                    tie_break = _score_component(
+                        away_periods.get(f"{key}_tie_break")
+                        or home_periods.get(f"{key}_tie_break")
+                    )
+                    if tie_break:
+                        token += f"({tie_break})"
+                    sets.append(token)
+            if sets:
+                return " ".join(sets)
+
+    # Some Tennis API payloads expose sets as a list of objects.
+    sets_value = _api_first(item, ("sets", "periods", "score.sets"), [])
+    if isinstance(sets_value, list):
+        sets: list[str] = []
+        for set_item in sets_value:
+            if not isinstance(set_item, dict):
+                continue
+            left = _api_first(
+                set_item,
+                ("player1", "player_1", "home", "homeScore", "score1", "first"),
+                None,
+            )
+            right = _api_first(
+                set_item,
+                ("player2", "player_2", "away", "awayScore", "score2", "second"),
+                None,
+            )
+            left_text, right_text = _score_component(left), _score_component(right)
+            if left_text and right_text:
+                sets.append(f"{left_text}-{right_text}")
+        if sets:
+            return " ".join(sets)
+    return ""
+
+
+def normalize_tournament_result(item: dict[str, Any]) -> dict[str, Any]:
+    """Normalize one tournament result across Tennis API response versions."""
+    if not isinstance(item, dict):
+        return {
+            "player_1_name": "",
+            "player_2_name": "",
+            "winner_name": "",
+            "status": "Unknown",
+            "score": "",
+            "round": "",
+            "provider_result": item,
+        }
+
+    player_1 = _api_first(
+        item,
+        (
+            "player1.name", "player_1.name", "homeTeam.name", "home_team.name",
+            "home.name", "participant1.name", "participant1", "player1",
+        ),
+        "",
+    )
+    player_2 = _api_first(
+        item,
+        (
+            "player2.name", "player_2.name", "awayTeam.name", "away_team.name",
+            "away.name", "participant2.name", "participant2", "player2",
+        ),
+        "",
+    )
+    if isinstance(player_1, dict):
+        player_1 = _api_first(player_1, ("name", "shortName", "fullName"), "")
+    if isinstance(player_2, dict):
+        player_2 = _api_first(player_2, ("name", "shortName", "fullName"), "")
+
+    winner = _api_first(
+        item,
+        ("winner.name", "winnerName", "winner_name"),
+        "",
+    )
+    if isinstance(winner, dict):
+        winner = _api_first(winner, ("name", "shortName"), "")
+    winner_code = pd.to_numeric(
+        _api_first(item, ("winnerCode", "winner_code", "winner"), None),
+        errors="coerce",
+    )
+    if not str(winner or "").strip() and pd.notna(winner_code):
+        if int(winner_code) == 1:
+            winner = player_1
+        elif int(winner_code) == 2:
+            winner = player_2
+
+    status_value = _api_first(
+        item,
+        ("status.description", "status.type", "status", "matchStatus", "state"),
+        "Ended",
+    )
+    if isinstance(status_value, dict):
+        status_value = _api_first(status_value, ("description", "type", "name"), "Ended")
+    status = str(status_value or "Ended")
+
+    return {
+        "player_1_name": str(player_1 or "").strip(),
+        "player_2_name": str(player_2 or "").strip(),
+        "winner_name": str(winner or "").strip(),
+        "status": status,
+        "status_type": str(
+            _api_first(item, ("status.type", "statusType", "state"), status)
+        ).casefold(),
+        "score": _score_from_result_record(item),
+        "round": str(
+            _api_first(item, ("round.name", "round", "roundName"), "")
+        ),
+        "event_id": _api_first(item, ("id", "eventId", "event_id"), None),
+        "provider_result": item,
+    }
+
+def fetch_event_details_by_players_date(
+    *, player_1_name: str, player_2_name: str, match_date: Any,
+    api_key: str, host: str,
+) -> dict[str, Any]:
+    """Resolve the Extend event and its event id using players and date."""
+    from urllib.parse import quote
+    date_text = pd.to_datetime(match_date, errors="raise").date().isoformat()
+    payload = _request_json(
+        f"https://{host}/tennis/v2/extend/api/event/get/"
+        f"{quote(str(player_1_name), safe='')}/{quote(str(player_2_name), safe='')}/{date_text}",
+        api_key,
+        host,
+    )
+    if not isinstance(payload, dict):
+        return _provider_result(
+            payload,
+            reason="event_payload_not_object",
+            source="tennis_api_event",
+        )
+    result = payload.get("result", payload)
+    if not isinstance(result, dict) or not result:
+        return {
+            "available": False,
+            "reason": "event_not_found",
+            "source": "tennis_api_event",
+            "event_id": None,
+            "event": result if isinstance(result, dict) else {},
+        }
+    event_id = _api_first(result, ("id", "eventId", "event_id"), None)
+    return {
+        "available": event_id not in (None, ""),
+        "reason": None if event_id not in (None, "") else "event_id_missing",
+        "source": "tennis_api_event",
+        "event_id": str(event_id) if event_id not in (None, "") else None,
+        "status": _api_first(result, ("status", "state"), None),
+        "score": _api_first(result, ("score", "result"), None),
+        "event": result,
+    }
+
+
+def _walk_api_values(value: Any):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from _walk_api_values(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _walk_api_values(child)
+
+
+def _best_match_winner_prices(payload: Any, player_1_name: str, player_2_name: str) -> dict[str, Any]:
+    p1 = _odds_normalize_text(player_1_name)
+    p2 = _odds_normalize_text(player_2_name)
+    first: list[tuple[float, str]] = []
+    second: list[tuple[float, str]] = []
+    for item in _walk_api_values(payload):
+        label = _api_first(item, ("name", "label", "selection", "outcome", "participant", "runner"), "")
+        if isinstance(label, dict):
+            label = label.get("name", label.get("label", ""))
+        price = np.nan
+        for key in ("odds", "odd", "price", "decimal", "decimalOdds", "value"):
+            if key in item:
+                price = _odds_number(item.get(key))
+                if np.isfinite(price):
+                    break
+        if not np.isfinite(price):
+            continue
+        bookmaker = str(_api_first(item, ("bookmaker.name", "bookmakerName", "bookmaker", "provider"), ""))
+        normalized = _odds_normalize_text(label)
+        if p1 and (normalized == p1 or p1 in normalized or normalized in p1):
+            first.append((float(price), bookmaker))
+        elif p2 and (normalized == p2 or p2 in normalized or normalized in p2):
+            second.append((float(price), bookmaker))
+    best1=max(first, default=(np.nan,""), key=lambda x:x[0])
+    best2=max(second, default=(np.nan,""), key=lambda x:x[0])
+    return {"available": bool(np.isfinite(best1[0]) or np.isfinite(best2[0])),
+            "odds_player_1": best1[0], "odds_player_2": best2[0],
+            "bookmaker_player_1": best1[1], "bookmaker_player_2": best2[1]}
+
+
+def fetch_prematch_odds_by_event(
+    *, event_id: str, player_1_name: str, player_2_name: str,
+    api_key: str, host: str,
+) -> dict[str, Any]:
+    payload = _request_json(
+        f"https://{host}/tennis/v2/extend/api/odds/pre-match/{event_id}",
+        api_key, host,
+    )
+    parsed = _provider_result(
+        _best_match_winner_prices(payload, player_1_name, player_2_name),
+        reason="match_winner_parser_returned_none",
+        source="extend_pre_match_odds",
+        event_id=str(event_id),
+    )
+    return {
+        **parsed,
+        "event_id": str(event_id),
+        "source": "extend_pre_match_odds",
+        "fetched_at_utc": pd.Timestamp.now(tz="UTC").isoformat(),
+        "provider_payload": payload,
+    }
+
+
+def fetch_odds_movements_by_event(
+    *, event_id: str, api_key: str, host: str,
+) -> dict[str, Any]:
+    payload = _request_json(
+        f"https://{host}/tennis/v2/extend/api/odds/summary/movements/last-10/{event_id}",
+        api_key, host,
+    )
+    records = _api_objects(payload)
+    return {
+        "available": bool(records),
+        "reason": None if records else "odds_movements_unavailable",
+        "source": "extend_odds_movements",
+        "event_id": str(event_id),
+        "movements": records,
+        "fetched_at_utc": pd.Timestamp.now(tz="UTC").isoformat(),
+        "provider_payload": payload,
     }

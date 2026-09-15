@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Entrena, valida, registra y promociona el champion del pipeline de tenis.
 
-Este es el punto de entrada de produccion y del ablation study v5. Ejecuta el entrenador profesional v6
+Este es el punto de entrada de produccion y del estudio de ablacion. Ejecuta el entrenador profesional v5
 como motor de benchmark y, cuando se indica --promote, valida y promociona de
 forma atomica el champion elegido en tune y su politica raw/calibrated elegida
 en calibration.
@@ -11,7 +11,7 @@ informe final y como alarma, nunca como criterio de seleccion o promocion.
 
 Flujo
 -----
-1. Ejecuta train_professional_tennis_model_professional_v6.py.
+1. Ejecuta train_professional_tennis_model_professional_v5.py como motor de benchmark temporal.
 2. Lee training_report.json y model_metadata.json.
 3. Comprueba que el champion fue elegido en tune y la politica en calibration.
 4. Valida artefacto, features, probabilidades de calibration y hashes.
@@ -412,6 +412,10 @@ def copy_candidate_to_registry(
         "direct_market_model_file": DIRECT_MARKET_MODEL_FILE if (temporary / DIRECT_MARKET_MODEL_FILE).exists() else None,
         "direct_market_metadata_file": DIRECT_MARKET_METADATA_FILE if (temporary / DIRECT_MARKET_METADATA_FILE).exists() else None,
         "dataset_fingerprint": report.get("dataset_fingerprint", {}),
+        "dataset_schema_version": report.get("dataset_schema_version"),
+        "feature_profile": report.get("feature_profile"),
+        "feature_families": report.get("feature_families", []),
+        "feature_builder_manifest": report.get("feature_builder_manifest"),
         "hashes_sha256": directory_hashes(temporary),
     }
     atomic_json(manifest, temporary / "registry_manifest.json")
@@ -474,6 +478,10 @@ def write_active_pointer(
         "model_file": registry_manifest["model_file"],
         "metadata_file": registry_manifest["metadata_file"],
         "registry_manifest_file": "registry_manifest.json",
+        "dataset_schema_version": registry_manifest.get("dataset_schema_version"),
+        "feature_profile": registry_manifest.get("feature_profile"),
+        "feature_families": registry_manifest.get("feature_families", []),
+        "feature_builder_manifest": registry_manifest.get("feature_builder_manifest"),
         "market_model_file": MARKET_MODEL_FILE if (production_dir / MARKET_MODEL_FILE).exists() else None,
         "market_metadata_file": MARKET_METADATA_FILE if (production_dir / MARKET_METADATA_FILE).exists() else None,
         "direct_market_model_file": DIRECT_MARKET_MODEL_FILE if (production_dir / DIRECT_MARKET_MODEL_FILE).exists() else None,
@@ -906,6 +914,11 @@ def _market_targets(
         winner_spw,
     )
 
+    score_text = result["score"].astype("string").fillna("").str.upper()
+    retired_or_incomplete = score_text.str.contains(
+        r"\b(?:RET|ABD|DEF|ABN|INT)\b", regex=True, na=False
+    )
+
     parsed_scores = (
         result["score"]
         .astype("object")
@@ -947,68 +960,76 @@ def _market_targets(
     valid = (
         valid_score
         & valid_target
+        & ~retired_or_incomplete
     )
 
-    result[
-        "target_player_1_wins_set"
-    ] = np.nan
-
-    result[
-        "target_player_2_wins_set"
-    ] = np.nan
-
-    result[
-        "target_total_games"
-    ] = np.nan
+    canonical_p1_set = pd.to_numeric(
+        result.get("target_player_1_wins_any_set", pd.Series(np.nan, index=result.index)),
+        errors="coerce",
+    )
+    canonical_p2_set = pd.to_numeric(
+        result.get("target_player_2_wins_any_set", pd.Series(np.nan, index=result.index)),
+        errors="coerce",
+    )
+    canonical_total_games = pd.to_numeric(
+        result.get("target_total_games", pd.Series(np.nan, index=result.index)),
+        errors="coerce",
+    )
+    result["target_player_1_wins_set"] = canonical_p1_set
+    result["target_player_2_wins_set"] = canonical_p2_set
+    result["target_total_games"] = canonical_total_games
 
     player_1_won_match = (
         target.eq(1)
     )
 
+    fallback_p1 = valid & result["target_player_1_wins_set"].isna()
     result.loc[
-        valid,
+        fallback_p1,
         "target_player_1_wins_set",
     ] = np.where(
         player_1_won_match.loc[
-            valid
+            fallback_p1
         ],
         totals.loc[
-            valid,
+            fallback_p1,
             "winner_sets",
         ].ge(1),
         totals.loc[
-            valid,
+            fallback_p1,
             "loser_sets",
         ].ge(1),
     ).astype(float)
 
+    fallback_p2 = valid & result["target_player_2_wins_set"].isna()
     result.loc[
-        valid,
+        fallback_p2,
         "target_player_2_wins_set",
     ] = np.where(
         player_1_won_match.loc[
-            valid
+            fallback_p2
         ],
         totals.loc[
-            valid,
+            fallback_p2,
             "loser_sets",
         ].ge(1),
         totals.loc[
-            valid,
+            fallback_p2,
             "winner_sets",
         ].ge(1),
     ).astype(float)
 
+    fallback_total = valid & result["target_total_games"].isna()
     result.loc[
-        valid,
+        fallback_total,
         "target_total_games",
     ] = (
         totals.loc[
-            valid,
+            fallback_total,
             "winner_games",
         ]
         + totals.loc[
-            valid,
+            fallback_total,
             "loser_games",
         ]
     )
@@ -2751,6 +2772,18 @@ def main() -> None:
         raise RuntimeError("Politica inconsistente entre report y metadata")
     if metadata.get("mode") != report.get("mode"):
         raise RuntimeError("Modo inconsistente entre report y metadata")
+    for contract_key in ("dataset_schema_version", "feature_profile"):
+        report_value = report.get(contract_key)
+        metadata_value = metadata.get(contract_key)
+        if not report_value or not metadata_value:
+            raise RuntimeError(
+                f"Falta {contract_key} en training_report.json o model_metadata.json"
+            )
+        if report_value != metadata_value:
+            raise RuntimeError(
+                f"{contract_key} inconsistente: report={report_value!r}; "
+                f"metadata={metadata_value!r}"
+            )
 
     model_file = verify_candidate_files(candidate, champion)
     expected_features = [str(value) for value in metadata.get("features", [])]

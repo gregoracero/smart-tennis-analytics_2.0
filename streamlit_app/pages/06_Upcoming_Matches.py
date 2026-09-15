@@ -6,6 +6,8 @@ Configuration (Streamlit secrets or environment):
 
 TENNIS_API_KEY = "..."
 TENNIS_API_HOST = "tennis-api-atp-wta-itf.p.rapidapi.com"
+SOFASCORE_API_KEY = "YOUR_SOFASCORE_RAPIDAPI_KEY"
+SOFASCORE_API_HOST = "sofascore-scraper-1000-free-calls.p.rapidapi.com"
 
 The page requests ATP singles fixtures by date, classifies ATP main draw,
 ATP qualifying and Challenger, lets a user select one fixture, maps players to
@@ -33,14 +35,27 @@ from streamlit_app.config.data_paths import (
     UPCOMING_MATCHES_CACHE_PATH,
 )
 from streamlit_app.data_access.players_adapted import get_match_market_probabilities
+from streamlit_app.services.sofascore_scraper_service import (
+    DEFAULT_SOFASCORE_HOST,
+    SofaScoreAPIError,
+    fetch_fixture_odds as fetch_sofascore_fixture_odds,
+    fetch_scheduled_matches as fetch_sofascore_scheduled_matches,
+    find_scheduled_match as find_sofascore_scheduled_match,
+    normalize_scheduled_result as normalize_sofascore_scheduled_result,
+)
 from streamlit_app.services.match_prediction_service import (
-    fetch_upcoming_market_odds,
+    fetch_event_details_by_players_date,
+    fetch_odds_movements_by_event,
+    fetch_prematch_odds_by_event,
+    fetch_tournament_results,
+    normalize_tournament_result,
     predict_upcoming_fixture,
 )
 
 # Backward-compatible local name retained by cache helpers.
 CACHE_PATH = UPCOMING_MATCHES_CACHE_PATH
 MATCH_PREDICTOR_PAGE = "pages/05_Match_Prediction_adapted.py"
+IA_CANDIDATES_PAGE = "pages/07_IA_Candidates.py"
 DEFAULT_HOST = "tennis-api-atp-wta-itf.p.rapidapi.com"
 DEFAULT_ODDS_HOST = "tennis-api-atp-wta-itf.p.rapidapi.com"
 ROUND_ALIASES = {
@@ -57,9 +72,20 @@ ROUND_ALIASES = {
 PRODUCTION_ROOT = PRODUCTION_ARTIFACTS_DIR
 MIN_CONTEXT_RELIABILITY_SAMPLE = 100
 PREDICTION_CACHE_SCHEMA_VERSION = 7
+SCORE_CACHE_SCHEMA_VERSION = 3
 UPCOMING_MARKET_SIMULATIONS = 1_000
+DEFAULT_OVER_LINE_BO3 = 22.5
+DEFAULT_OVER_LINE_BO5 = 38.5
 MAX_BATCH_SECONDS = 90.0
 
+
+
+def provider_id_text(value: Any) -> str:
+    """Normalize numeric provider IDs so 123, 123.0 and '123' share a key."""
+    numeric = pd.to_numeric(value, errors="coerce")
+    if pd.notna(numeric):
+        return str(int(numeric))
+    return str(value or "").strip()
 
 def stable_prediction_key(fixture: pd.Series | dict[str, Any]) -> str:
     """Create one stable key for saving and rendering predictions."""
@@ -1498,9 +1524,14 @@ if not reliability_metadata.get("available"):
 api_key = secret_or_env("TENNIS_API_KEY")
 host = secret_or_env("TENNIS_API_HOST", DEFAULT_HOST) or DEFAULT_HOST
 odds_host = secret_or_env("TENNIS_ODDS_API_HOST", DEFAULT_ODDS_HOST) or DEFAULT_ODDS_HOST
+sofascore_api_key = secret_or_env("SOFASCORE_API_KEY")
+sofascore_host = (
+    secret_or_env("SOFASCORE_API_HOST", DEFAULT_SOFASCORE_HOST)
+    or DEFAULT_SOFASCORE_HOST
+)
 
 with st.container(border=True):
-    c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
+    c1, c2, c3, c4, c5 = st.columns([2, 1, 1, 1, 1])
     with c1:
         start_date = st.date_input("From", value=date.today())
     with c2:
@@ -1508,6 +1539,8 @@ with st.container(border=True):
     with c3:
         refresh = st.button("Refresh fixtures", type="primary", use_container_width=True)
     with c4:
+        load_scores = st.button("Load scores", use_container_width=True)
+    with c5:
         use_cache = st.button("Use local cache", use_container_width=True)
 
 if "upcoming_matches" not in st.session_state:
@@ -1528,8 +1561,401 @@ if refresh:
 
 if use_cache:
     st.session_state.upcoming_matches = load_cache()
-
+if st.session_state.get("upcoming_score_cache_schema") != SCORE_CACHE_SCHEMA_VERSION:
+    st.session_state["upcoming_score_cache"] = {}
+    st.session_state["upcoming_loaded_score_tournaments"] = set()
+    st.session_state["upcoming_score_request_audit"] = []
+    st.session_state["upcoming_score_cache_schema"] = SCORE_CACHE_SCHEMA_VERSION
+if "upcoming_score_cache" not in st.session_state:
+    st.session_state["upcoming_score_cache"] = {}
+if "upcoming_odds_movement_cache" not in st.session_state:
+    st.session_state["upcoming_odds_movement_cache"] = {}
+if "upcoming_loaded_score_tournaments" not in st.session_state:
+    st.session_state["upcoming_loaded_score_tournaments"] = set()
+if "upcoming_score_request_audit" not in st.session_state:
+    st.session_state["upcoming_score_request_audit"] = []
+if "upcoming_sofascore_scheduled_cache" not in st.session_state:
+    st.session_state["upcoming_sofascore_scheduled_cache"] = {}
+score_cache: dict[str, dict[str, Any]] = st.session_state["upcoming_score_cache"]
+sofascore_scheduled_cache: dict[str, dict[str, Any]] = st.session_state[
+    "upcoming_sofascore_scheduled_cache"
+]
+loaded_score_tournaments: set[str] = set(
+    st.session_state["upcoming_loaded_score_tournaments"]
+)
+movement_cache: dict[str, dict[str, Any]] = st.session_state["upcoming_odds_movement_cache"]
 fixtures = st.session_state.upcoming_matches.copy()
+
+def get_sofascore_scheduled(date_value: Any) -> dict[str, Any]:
+    """Return one SofaScore scheduled payload per date and Streamlit session."""
+    date_key = pd.to_datetime(date_value, errors="raise").date().isoformat()
+    if date_key not in sofascore_scheduled_cache:
+        sofascore_scheduled_cache[date_key] = fetch_sofascore_scheduled_matches(
+            date_key,
+            api_key=sofascore_api_key or "",
+            host=sofascore_host,
+        )
+        st.session_state["upcoming_sofascore_scheduled_cache"] = dict(
+            sofascore_scheduled_cache
+        )
+    return sofascore_scheduled_cache[date_key]
+
+
+def score_name_keys(value: Any) -> set[str]:
+    """Conservative name variants used only for provider result reconciliation."""
+    normalized = normalize_text(value)
+    if not normalized:
+        return set()
+    tokens = normalized.split()
+    keys = {normalized}
+    if len(tokens) >= 2:
+        keys.add(f"{tokens[0]} {tokens[-1]}")
+        keys.add(tokens[-1])
+    alias = PLAYER_NAME_ALIASES.get(normalized)
+    if alias:
+        keys.add(normalize_text(alias))
+    return {key for key in keys if key}
+
+
+def result_matches_fixture(result: dict[str, Any], fixture: pd.Series) -> bool:
+    result_1 = score_name_keys(result.get("player_1_name"))
+    result_2 = score_name_keys(result.get("player_2_name"))
+    fixture_1 = score_name_keys(fixture.get("player_1_name"))
+    fixture_2 = score_name_keys(fixture.get("player_2_name"))
+    direct = bool(result_1 & fixture_1) and bool(result_2 & fixture_2)
+    reversed_order = bool(result_1 & fixture_2) and bool(result_2 & fixture_1)
+    return direct or reversed_order
+
+
+def score_cache_key(row: pd.Series | dict[str, Any]) -> str:
+    return f"fixture:{stable_prediction_key(row)}"
+
+
+def cache_normalized_result_for_fixtures(
+    normalized: dict[str, Any],
+    tournament_fixtures: pd.DataFrame,
+) -> int:
+    """Attach one provider result directly to every matching visible fixture."""
+    if not normalized.get("player_1_name") or not normalized.get("player_2_name"):
+        return 0
+    matches = 0
+    for _, fixture in tournament_fixtures.iterrows():
+        if not result_matches_fixture(normalized, fixture):
+            continue
+        score_cache[score_cache_key(fixture)] = normalized
+        matches += 1
+    return matches
+
+
+def load_sofascore_scores_for_tournament(
+    season_id: str, tournament_fixtures: pd.DataFrame,
+) -> tuple[int, set[str]]:
+    """Load finished scores from cached SofaScore scheduled responses."""
+    if not sofascore_api_key:
+        raise SofaScoreAPIError("SOFASCORE_API_KEY is not configured.")
+    count = 0
+    used_dates: set[str] = set()
+    for _, fixture in tournament_fixtures.iterrows():
+        date_key = pd.to_datetime(fixture["match_date"], errors="raise").date().isoformat()
+        scheduled = get_sofascore_scheduled(date_key)
+        used_dates.add(date_key)
+        resolved = find_sofascore_scheduled_match(
+            scheduled, player_1_name=str(fixture["player_1_name"]),
+            player_2_name=str(fixture["player_2_name"]),
+            tournament=str(fixture["tournament"]),
+        )
+        if not resolved.get("available"):
+            continue
+        normalized = normalize_sofascore_scheduled_result(
+            resolved, player_1_name=str(fixture["player_1_name"]),
+            player_2_name=str(fixture["player_2_name"]),
+        )
+        if normalized.get("status_type") != "finished":
+            continue
+        names = sorted((normalize_text(normalized.get("player_1_name")),
+                        normalize_text(normalized.get("player_2_name"))))
+        if names[0] and names[1]:
+            score_cache[f"{season_id}|{'|'.join(names)}"] = normalized
+            score_cache[score_cache_key(fixture)] = normalized
+            count += 1
+    return count, used_dates
+
+if load_scores:
+    if not api_key:
+        st.session_state["upcoming_api_notice"] = {
+            "level": "error", "message": "TENNIS_API_KEY is not configured."
+        }
+    elif fixtures.empty:
+        st.session_state["upcoming_api_notice"] = {
+            "level": "warning", "message": "Load fixtures before loading scores."
+        }
+    else:
+        result_errors: list[str] = []
+        loaded_results = 0
+        matched_fixtures = 0
+        quota_exhausted = False
+        tennis_api_disabled_for_click = False
+        tennis_api_requests_issued = 0
+        sofascore_dates_requested: set[str] = set()
+        today_value = pd.Timestamp.today().date()
+        eligible_fixtures = fixtures.loc[
+            pd.to_datetime(fixtures["match_date"], errors="coerce").dt.date.le(today_value)
+        ].copy()
+        # Build exactly one request row per provider tournament/season id.
+        # Do not deduplicate by the display name because the same season may be
+        # represented by more than one tournament label in the fixture payload.
+        groups = eligible_fixtures[["tournament_id", "tournament"]].copy()
+        groups["season_id"] = groups["tournament_id"].map(provider_id_text)
+        groups = (
+            groups.loc[groups["season_id"].ne("")]
+            .sort_values(["season_id", "tournament"], kind="mergesort")
+            .drop_duplicates(subset=["season_id"], keep="first")
+            .reset_index(drop=True)
+        )
+        pending_groups = groups.loc[
+            ~groups["season_id"].isin(loaded_score_tournaments)
+        ].copy()
+        if pending_groups.empty:
+            st.session_state["upcoming_api_notice"] = {
+                "level": "info",
+                "message": "All eligible tournament scores are already cached for this session.",
+            }
+        else:
+            progress = st.progress(0.0, text="Loading tournament scores...")
+            requested_this_click: set[str] = set()
+            request_audit: list[dict[str, Any]] = list(
+                st.session_state["upcoming_score_request_audit"]
+            )
+            for position, (_, tournament_row) in enumerate(pending_groups.iterrows(), start=1):
+                season_id = str(tournament_row["season_id"])
+                # Defensive guard: even if upstream data becomes duplicated,
+                # never issue a second HTTP request for the same season id.
+                if season_id in requested_this_click:
+                    continue
+                requested_this_click.add(season_id)
+                request_started = pd.Timestamp.now(tz="UTC").isoformat()
+                fallback_rows = eligible_fixtures.loc[
+                    eligible_fixtures["tournament_id"].map(provider_id_text).eq(season_id)
+                ].copy()
+                if tennis_api_disabled_for_click:
+                    try:
+                        fallback_count, fallback_dates = load_sofascore_scores_for_tournament(
+                            season_id, fallback_rows
+                        )
+                        sofascore_dates_requested.update(fallback_dates)
+                        loaded_score_tournaments.add(season_id)
+                        loaded_results += fallback_count
+                        request_audit.append({
+                            "season_id": season_id, "tournament": str(tournament_row["tournament"]),
+                            "requested_at_utc": request_started,
+                            "status": "SOFASCORE_FALLBACK_AFTER_429",
+                            "result_records": fallback_count,
+                            "fallback_dates": sorted(fallback_dates),
+                            "tennis_api_request_issued": False,
+                        })
+                    except Exception as fallback_error:
+                        result_errors.append(
+                            f"{tournament_row['tournament']}: SofaScore fallback failed: "
+                            f"{type(fallback_error).__name__}: {fallback_error}"
+                        )
+                    continue
+                try:
+                    tennis_api_requests_issued += 1
+                    raw_results = fetch_tournament_results(
+                        season_id=season_id, api_key=api_key, host=host, tour_type="atp"
+                    )
+                    tournament_visible_matches = 0
+                    normalized_record_count = 0
+                    for raw_result in raw_results:
+                        normalized = normalize_tournament_result(raw_result)
+                        names = sorted((
+                            normalize_text(normalized.get("player_1_name")),
+                            normalize_text(normalized.get("player_2_name")),
+                        ))
+                        if not names[0] or not names[1]:
+                            continue
+                        normalized_record_count += 1
+                        score_cache[f"{season_id}|{'|'.join(names)}"] = normalized
+                        tournament_visible_matches += cache_normalized_result_for_fixtures(
+                            normalized,
+                            fallback_rows,
+                        )
+
+                    if normalized_record_count == 0 and sofascore_api_key:
+                        fallback_count, fallback_dates = load_sofascore_scores_for_tournament(
+                            season_id,
+                            fallback_rows,
+                        )
+                        sofascore_dates_requested.update(fallback_dates)
+                        loaded_results += fallback_count
+                        if fallback_count > 0:
+                            loaded_score_tournaments.add(season_id)
+                        request_audit.append({
+                            "season_id": season_id,
+                            "tournament": str(tournament_row["tournament"]),
+                            "requested_at_utc": request_started,
+                            "status": "SOFASCORE_FALLBACK_AFTER_EMPTY_200",
+                            "result_records": int(len(raw_results)),
+                            "normalized_records": 0,
+                            "fallback_records": fallback_count,
+                            "fallback_dates": sorted(fallback_dates),
+                            "tennis_api_request_issued": True,
+                        })
+                    else:
+                        if normalized_record_count > 0:
+                            loaded_score_tournaments.add(season_id)
+                        request_audit.append({
+                            "season_id": season_id,
+                            "tournament": str(tournament_row["tournament"]),
+                            "requested_at_utc": request_started,
+                            "status": (
+                                "SUCCESS" if normalized_record_count
+                                else "EMPTY_OR_UNPARSEABLE_RESULTS"
+                            ),
+                            "result_records": int(len(raw_results)),
+                            "normalized_records": normalized_record_count,
+                            "visible_matches": tournament_visible_matches,
+                        })
+                        loaded_results += normalized_record_count
+                except (PermissionError, requests.HTTPError) as error:
+                    status_code = getattr(getattr(error, "response", None), "status_code", None)
+                    is_forbidden = isinstance(error, PermissionError) or status_code == 403
+                    is_rate_limited = status_code == 429
+                    if (is_forbidden or is_rate_limited) and sofascore_api_key:
+                        if is_rate_limited:
+                            quota_exhausted = True
+                            tennis_api_disabled_for_click = True
+                        try:
+                            fallback_count, fallback_dates = load_sofascore_scores_for_tournament(
+                                season_id, fallback_rows
+                            )
+                            sofascore_dates_requested.update(fallback_dates)
+                            loaded_score_tournaments.add(season_id)
+                            loaded_results += fallback_count
+                            request_audit.append({
+                                "season_id": season_id,
+                                "tournament": str(tournament_row["tournament"]),
+                                "requested_at_utc": request_started,
+                                "status": ("SOFASCORE_FALLBACK_AFTER_429" if is_rate_limited
+                                           else "SOFASCORE_FALLBACK_AFTER_403"),
+                                "result_records": fallback_count,
+                                "fallback_dates": sorted(fallback_dates),
+                                "tennis_api_request_issued": True,
+                            })
+                        except Exception as fallback_error:
+                            result_errors.append(
+                                f"{tournament_row['tournament']}: Tennis API HTTP {status_code or 403} "
+                                f"and SofaScore fallback failed: {type(fallback_error).__name__}: "
+                                f"{fallback_error}"
+                            )
+                        continue
+                    request_audit.append({
+                        "season_id": season_id, "tournament": str(tournament_row["tournament"]),
+                        "requested_at_utc": request_started,
+                        "status": f"HTTP_{status_code or 'FORBIDDEN'}", "result_records": 0,
+                        "tennis_api_request_issued": True,
+                    })
+                    if is_rate_limited:
+                        quota_exhausted = True
+                        result_errors.append(
+                            "Tennis API quota reached and SOFASCORE_API_KEY is missing."
+                        )
+                        break
+                    result_errors.append(
+                        f"{tournament_row['tournament']}: HTTP {status_code or '?'}"
+                    )
+                except Exception as error:
+                    request_audit.append({
+                        "season_id": season_id,
+                        "tournament": str(tournament_row["tournament"]),
+                        "requested_at_utc": request_started,
+                        "status": type(error).__name__,
+                        "result_records": 0,
+                    })
+                    result_errors.append(
+                        f"{tournament_row['tournament']}: {type(error).__name__}: {error}"
+                    )
+                progress.progress(
+                    position / max(len(pending_groups), 1),
+                    text=f"Tournament {position}/{len(pending_groups)} · {tournament_row['tournament']}",
+                )
+                # Basic allows 4 requests/second. Stay comfortably below it.
+                time.sleep(0.55)
+            progress.empty()
+            for _, fixture_row in fixtures.iterrows():
+                season_id = provider_id_text(fixture_row.get("tournament_id"))
+                names = sorted((
+                    normalize_text(fixture_row.get("player_1_name")),
+                    normalize_text(fixture_row.get("player_2_name")),
+                ))
+                direct_key = score_cache_key(fixture_row)
+                legacy_key = f"{season_id}|{'|'.join(names)}"
+                matched_fixtures += int(
+                    direct_key in score_cache or legacy_key in score_cache
+                )
+            st.session_state["upcoming_score_cache"] = dict(score_cache)
+            st.session_state["upcoming_loaded_score_tournaments"] = set(
+                loaded_score_tournaments
+            )
+            st.session_state["upcoming_score_request_audit"] = request_audit[-200:]
+            message = (
+                "Score loading completed. This action loads statuses and final scores, "
+                "not bookmaker odds. "
+                f"{tennis_api_requests_issued} Tennis API request(s) "
+                f"issued for {len(requested_this_click)} unique tournament(s); "
+                f"{len(sofascore_dates_requested)} SofaScore date payload(s) used; "
+                f"{len(loaded_score_tournaments)} tournament(s) cached, "
+                f"{loaded_results} new result record(s), "
+                f"{matched_fixtures} visible fixture match(es)."
+            )
+            if quota_exhausted and sofascore_api_key:
+                message += (
+                    " Tennis API returned HTTP 429. SofaScore fallback was activated for "
+                    "the affected and remaining tournaments; no further Tennis API requests "
+                    "were issued during this click."
+                )
+            elif quota_exhausted:
+                message += (
+                    " Tennis API returned HTTP 429 and SOFASCORE_API_KEY is not configured. "
+                    "Further requests were stopped."
+                )
+            elif result_errors:
+                message += " Errors: " + "; ".join(result_errors[:3])
+            current_audit = request_audit[-max(len(requested_this_click), 1):]
+            empty_result_tournaments = sum(
+                item.get("status") in {
+                    "EMPTY_OR_UNPARSEABLE_RESULTS",
+                    "SOFASCORE_FALLBACK_AFTER_EMPTY_200",
+                }
+                for item in current_audit
+            )
+            if empty_result_tournaments:
+                message += (
+                    f" Tennis API returned an empty/unusable HTTP 200 response for "
+                    f"{empty_result_tournaments} tournament(s)."
+                )
+                if sofascore_dates_requested:
+                    message += " SofaScore scheduled fallback was attempted by date."
+                elif not sofascore_api_key:
+                    message += " SOFASCORE_API_KEY is not configured, so fallback was unavailable."
+            if loaded_results > 0 and matched_fixtures == 0:
+                message += (
+                    " Results were returned but none matched the visible fixtures. "
+                    "Check provider names and tournament IDs in the score request audit."
+                )
+            st.session_state["upcoming_api_notice"] = {
+                "level": "warning" if result_errors or matched_fixtures == 0 else "success",
+                "message": message,
+            }
+    st.rerun()
+
+notice = st.session_state.pop("upcoming_api_notice", None)
+if isinstance(notice, dict):
+    level = str(notice.get("level", "info"))
+    getattr(st, level if level in {"success", "warning", "error", "info"} else "info")(
+        str(notice.get("message", ""))
+    )
+
 if fixtures.empty:
     st.info("No fixtures loaded. Configure the API key and select Refresh fixtures.")
     with st.expander("API configuration"):
@@ -1548,14 +1974,6 @@ with filter_2:
 with filter_3:
     date_options = sorted(fixtures["match_date"].dropna().unique().tolist())
     date_filter = st.multiselect("Date", date_options, default=date_options)
-market_filter_1, market_filter_2, market_filter_3 = st.columns(3)
-with market_filter_1:
-    over_line_bo3 = st.number_input("Over games line, best of 3", min_value=15.5, max_value=35.5, value=22.5, step=1.0)
-with market_filter_2:
-    over_line_bo5 = st.number_input("Over games line, best of 5", min_value=25.5, max_value=60.5, value=38.5, step=1.0)
-with market_filter_3:
-    minimum_market_probability = st.slider("Minimum secondary-market probability", 0, 100, 0, 5)
-
 batch_filter_1, batch_filter_2 = st.columns([1, 2])
 with batch_filter_1:
     calculation_batch_size = st.selectbox(
@@ -1563,17 +1981,17 @@ with batch_filter_1:
         options=[5, 10, 20, 40],
         index=1,
         help=(
-            "Only the next unresolved visible matches are calculated. "
-            "Run the batch again to continue."
+            "Controls how many unresolved matches are calculated in each run. "
+            "All filtered matches remain visible in the daily tables."
         ),
     )
 with batch_filter_2:
     st.caption(
         f"Upcoming Matches uses {UPCOMING_MARKET_SIMULATIONS:,} Monte Carlo "
         f"simulations per fixture and returns control after about "
-        f"{MAX_BATCH_SECONDS:.0f} seconds."
+        f"{MAX_BATCH_SECONDS:.0f} seconds. All fixtures remain visible while "
+        "probabilities are calculated progressively."
     )
-
 visible = fixtures.loc[
     fixtures["competition_type"].isin(competition_filter)
     & fixtures["match_date"].isin(date_filter)
@@ -1711,7 +2129,6 @@ if clear_probabilities:
     st.session_state["upcoming_historical_evidence"] = {}
     st.session_state.pop("upcoming_last_batch", None)
     st.session_state.pop("upcoming_open_model_details", None)
-    st.session_state["upcoming_render_page"] = 1
     st.session_state["upcoming_prediction_cache_schema"] = PREDICTION_CACHE_SCHEMA_VERSION
     st.rerun()
 
@@ -1778,9 +2195,9 @@ if calculate_probabilities:
                     ),
                     tournament_name=str(fixture["tournament"]),
                     over_games_line=float(
-                        over_line_bo5
+                        DEFAULT_OVER_LINE_BO5
                         if int(fixture["best_of"]) == 5
-                        else over_line_bo3
+                        else DEFAULT_OVER_LINE_BO3
                     ),
                     market_simulations=UPCOMING_MARKET_SIMULATIONS,
                 )
@@ -1810,11 +2227,6 @@ if calculate_probabilities:
                             "Available prediction has missing winner probabilities"
                         )
 
-                    selected_over_line = float(
-                        over_line_bo5
-                        if int(fixture["best_of"]) == 5
-                        else over_line_bo3
-                    )
                     model_market_probabilities = result.get(
                         "market_probabilities", {}
                     )
@@ -1905,6 +2317,9 @@ if visible_prediction_errors:
         st.dataframe(pd.DataFrame(visible_prediction_errors), use_container_width=True, hide_index=True)
 
 
+if "upcoming_odds_cache" not in st.session_state:
+    st.session_state["upcoming_odds_cache"] = {}
+odds_cache: dict[str, dict[str, Any]] = st.session_state["upcoming_odds_cache"]
 def cached_probability(prediction_key: Any, side: int) -> float:
     item = prediction_cache.get(str(prediction_key), {})
     value = item.get(f"probability_player_{side}")
@@ -1962,10 +2377,21 @@ visible["player_2_win_set_probability"] = visible["prediction_key"].map(
 )
 visible["over_games_probability"] = visible["prediction_key"].map(lambda key: cached_market_probability(key, "over_games_probability"))
 visible["under_games_probability"] = visible["prediction_key"].map(lambda key: cached_market_probability(key, "under_games_probability"))
-visible["secondary_market_peak"] = visible[["player_1_first_set_probability", "player_2_first_set_probability", "player_1_win_set_probability", "player_2_win_set_probability", "over_games_probability"]].max(axis=1, skipna=True)
-if minimum_market_probability > 0:
-    visible = visible.loc[visible["secondary_market_peak"].ge(float(minimum_market_probability))].copy()
 
+def cached_over_probability(prediction_key: Any, line: float) -> float:
+    item = prediction_cache.get(str(prediction_key), {})
+    market = item.get("market_probabilities", {}) if isinstance(item, dict) else {}
+    probabilities = market.get("over_probabilities", {}) if isinstance(market, dict) else {}
+    if not isinstance(probabilities, dict):
+        return np.nan
+    value = pd.to_numeric(probabilities.get(f"{float(line):.1f}"), errors="coerce")
+    return float(value * 100.0) if pd.notna(value) and np.isfinite(value) else np.nan
+
+OVER_LINES = (18.5, 19.5, 20.5, 21.5, 22.5)
+for over_line in OVER_LINES:
+    visible[f"over_{str(over_line).replace('.', '_')}_probability"] = visible["prediction_key"].map(
+        lambda key, line=over_line: cached_over_probability(key, line)
+    )
 visible["favorite_model_probability"] = visible["prediction_key"].map(
     lambda key: favorite_probability_from_cache(
         key,
@@ -1987,70 +2413,49 @@ visible["model_reliability"] = visible["reliability_details"].map(
     reliability_display
 )
 
-# ---------------------------------------------------------------------------
-# Render pagination
-# ---------------------------------------------------------------------------
-# Prediction batches always run against the full filtered `visible` DataFrame.
-# Only the small `render_visible` slice below is converted into Streamlit
-# widgets, preventing a rerun from building hundreds of buttons/expanders.
-render_control_1, render_control_2, render_control_3 = st.columns([1, 1, 2])
-with render_control_1:
-    render_page_size = st.selectbox(
-        "Matches shown per page",
-        options=[5, 10, 20],
-        index=1,
-        key="upcoming_render_page_size",
-    )
+def _score_for_fixture(row: pd.Series) -> dict[str, Any]:
+    direct = score_cache.get(score_cache_key(row), {})
+    if isinstance(direct, dict) and direct:
+        return direct
+    season_id = provider_id_text(row.get("tournament_id", ""))
+    names = sorted((
+        normalize_text(row.get("player_1_name")),
+        normalize_text(row.get("player_2_name")),
+    ))
+    legacy = score_cache.get(f"{season_id}|{'|'.join(names)}", {})
+    return legacy if isinstance(legacy, dict) else {}
 
-render_total_rows = int(len(visible))
-render_total_pages = max(
-    1,
-    int(np.ceil(render_total_rows / int(render_page_size))),
+visible["score_details"] = visible.apply(_score_for_fixture, axis=1)
+visible["match_status"] = visible["score_details"].map(lambda item: str(item.get("status", "Upcoming")))
+visible["match_score"] = visible["score_details"].map(lambda item: str(item.get("score", "")) or "-")
+
+def _cached_odds(key: Any, side: int) -> float:
+    return pd.to_numeric(odds_cache.get(str(key), {}).get(f"odds_player_{side}"), errors="coerce")
+
+def _no_vig_probability(key: Any, side: int) -> float:
+    item = odds_cache.get(str(key), {})
+    o1 = pd.to_numeric(item.get("odds_player_1"), errors="coerce")
+    o2 = pd.to_numeric(item.get("odds_player_2"), errors="coerce")
+    if pd.isna(o1) or pd.isna(o2) or o1 <= 1 or o2 <= 1:
+        return np.nan
+    raw1, raw2 = 1.0 / float(o1), 1.0 / float(o2)
+    total = raw1 + raw2
+    return (raw1 if side == 1 else raw2) / total if total > 0 else np.nan
+
+visible["market_odds_player_1"] = visible["prediction_key"].map(lambda key: _cached_odds(key, 1))
+visible["market_odds_player_2"] = visible["prediction_key"].map(lambda key: _cached_odds(key, 2))
+visible["edge_player_1"] = visible.apply(
+    lambda row: row["model_probability_player_1"] / 100.0 - _no_vig_probability(row["prediction_key"], 1)
+    if pd.notna(row["model_probability_player_1"]) else np.nan, axis=1
 )
-
-# Keep the active page valid when filters or page size change.
-current_render_page = int(
-    st.session_state.get("upcoming_render_page", 1)
+visible["edge_player_2"] = visible.apply(
+    lambda row: row["model_probability_player_2"] / 100.0 - _no_vig_probability(row["prediction_key"], 2)
+    if pd.notna(row["model_probability_player_2"]) else np.nan, axis=1
 )
-current_render_page = min(max(current_render_page, 1), render_total_pages)
-st.session_state["upcoming_render_page"] = current_render_page
-
-with render_control_2:
-    selected_render_page = st.number_input(
-        "Page",
-        min_value=1,
-        max_value=render_total_pages,
-        value=current_render_page,
-        step=1,
-        key="upcoming_render_page_input",
-    )
-selected_render_page = int(selected_render_page)
-st.session_state["upcoming_render_page"] = selected_render_page
-
-render_start = (selected_render_page - 1) * int(render_page_size)
-render_stop = min(render_start + int(render_page_size), render_total_rows)
-render_visible = visible.iloc[render_start:render_stop].copy()
-
-with render_control_3:
-    if render_total_rows:
-        st.caption(
-            f"Showing matches {render_start + 1}-{render_stop} of "
-            f"{render_total_rows} · Page {selected_render_page}/{render_total_pages}. "
-            "Prediction batches still process the next unresolved matches from "
-            "the complete filtered list."
-        )
-    else:
-        st.caption("No matches to render.")
 
 # ---------------------------------------------------------------------------
 # On-demand bookmaker odds
 # ---------------------------------------------------------------------------
-if "upcoming_odds_cache" not in st.session_state:
-    st.session_state["upcoming_odds_cache"] = {}
-
-odds_cache: dict[str, dict[str, Any]] = st.session_state["upcoming_odds_cache"]
-
-
 def _walk_json(value: Any):
     """Yield every dictionary contained in a JSON-like payload."""
     if isinstance(value, dict):
@@ -2146,25 +2551,222 @@ def parse_match_winner_odds(
     }
 
 
+def _safe_provider_result(
+    value: Any,
+    *,
+    reason: str,
+    source: str,
+) -> dict[str, Any]:
+    """Guarantee a dictionary contract for every provider integration."""
+    if isinstance(value, dict):
+        return value
+    return {
+        "available": False,
+        "reason": reason,
+        "source": source,
+        "returned_type": type(value).__name__,
+    }
+
+
+def _resolve_event(
+    fixture: pd.Series,
+    api_key_value: str,
+    host_value: str,
+) -> dict[str, Any]:
+    result = fetch_event_details_by_players_date(
+        player_1_name=str(fixture["player_1_name"]),
+        player_2_name=str(fixture["player_2_name"]),
+        match_date=fixture["match_date"],
+        api_key=api_key_value,
+        host=host_value,
+    )
+    return _safe_provider_result(
+        result,
+        reason="tennis_event_resolution_returned_none",
+        source="tennis_api",
+    )
+
+
 def fetch_fixture_odds(
     fixture: pd.Series,
     api_key_value: str,
     host_value: str,
 ) -> dict[str, Any]:
-    """Delegate market integration to the shared service."""
-    return fetch_upcoming_market_odds(
-        player_1_name=str(fixture["player_1_name"]),
-        player_2_name=str(fixture["player_2_name"]),
-        match_date=fixture["match_date"],
-        tournament=str(fixture["tournament"]),
-        api_key=api_key_value,
-        host=host_value,
-        tour_type="atp",
-        tournament_id=fixture.get("tournament_id"),
-        round_id=fixture.get("provider_round_id"),
-        provider_player_1_id=fixture.get("provider_player_1_id"),
-        provider_player_2_id=fixture.get("provider_player_2_id"),
+    """Use Tennis API first and SofaScore after HTTP 403 or HTTP 429."""
+    try:
+        event = _resolve_event(fixture, api_key_value, host_value)
+        if not event.get("available"):
+            return event
+        tennis_result = fetch_prematch_odds_by_event(
+            event_id=str(event["event_id"]),
+            player_1_name=str(fixture["player_1_name"]),
+            player_2_name=str(fixture["player_2_name"]),
+            api_key=api_key_value,
+            host=host_value,
+        )
+        return _safe_provider_result(
+            tennis_result,
+            reason="tennis_odds_returned_none",
+            source="tennis_api",
+        )
+    except (PermissionError, requests.HTTPError) as tennis_error:
+        status_code = getattr(
+            getattr(tennis_error, "response", None), "status_code", None
+        )
+        is_forbidden = isinstance(tennis_error, PermissionError) or status_code == 403
+        is_rate_limited = status_code == 429
+        if not (is_forbidden or is_rate_limited):
+            raise
+        if not sofascore_api_key:
+            return {
+                "available": False,
+                "reason": "tennis_api_fallback_key_missing",
+                "status_code": status_code,
+                "error": str(tennis_error),
+                "source": "tennis_api",
+            }
+        scheduled = _safe_provider_result(
+            get_sofascore_scheduled(fixture["match_date"]),
+            reason="sofascore_scheduled_returned_none",
+            source="sofascore_scraper",
+        )
+        if not scheduled.get("available", True):
+            return scheduled
+        result = fetch_sofascore_fixture_odds(
+            player_1_name=str(fixture["player_1_name"]),
+            player_2_name=str(fixture["player_2_name"]),
+            match_date=fixture["match_date"],
+            tournament=str(fixture["tournament"]),
+            api_key=sofascore_api_key,
+            host=sofascore_host,
+            scheduled_payload=scheduled,
+        )
+        result = _safe_provider_result(
+            result,
+            reason="sofascore_odds_returned_none",
+            source="sofascore_scraper",
+        )
+        return {
+            **result,
+            "fallback_trigger": (
+                "tennis_api_http_429" if is_rate_limited
+                else "tennis_api_http_403"
+            ),
+            "tennis_api_error": str(tennis_error),
+        }
+    except Exception as error:
+        return {
+            "available": False,
+            "reason": "odds_provider_error",
+            "error": f"{type(error).__name__}: {error}",
+            "source": "odds_integration",
+        }
+
+
+def _sofascore_movements(
+    fixture: pd.Series,
+    odds_result: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "available": bool(odds_result.get("available")),
+        "movements": [
+            {
+                "Player": fixture["player_1_name"],
+                "Opening odds": odds_result.get("opening_odds_player_1"),
+                "Current odds": odds_result.get("odds_player_1"),
+                "Direction": odds_result.get("movement_player_1"),
+            },
+            {
+                "Player": fixture["player_2_name"],
+                "Opening odds": odds_result.get("opening_odds_player_2"),
+                "Current odds": odds_result.get("odds_player_2"),
+                "Direction": odds_result.get("movement_player_2"),
+            },
+        ],
+        "source": "sofascore_scraper_cached_odds",
+        "reason": odds_result.get("reason"),
+    }
+
+
+def fetch_fixture_movements(
+    fixture: pd.Series,
+    api_key_value: str,
+    host_value: str,
+) -> dict[str, Any]:
+    key = str(fixture["prediction_key"])
+    cached = _safe_provider_result(
+        odds_cache.get(key, {}),
+        reason="cached_odds_returned_none",
+        source="upcoming_odds_cache",
     )
+    if cached.get("source") == "sofascore_scraper_odds_fallback":
+        return _sofascore_movements(fixture, cached)
+    try:
+        event = _resolve_event(fixture, api_key_value, host_value)
+        if not event.get("available"):
+            return event
+        tennis_result = fetch_odds_movements_by_event(
+            event_id=str(event["event_id"]),
+            api_key=api_key_value,
+            host=host_value,
+        )
+        return _safe_provider_result(
+            tennis_result,
+            reason="tennis_movements_returned_none",
+            source="tennis_api",
+        )
+    except (PermissionError, requests.HTTPError) as tennis_error:
+        status_code = getattr(
+            getattr(tennis_error, "response", None), "status_code", None
+        )
+        is_forbidden = isinstance(tennis_error, PermissionError) or status_code == 403
+        is_rate_limited = status_code == 429
+        if not (is_forbidden or is_rate_limited):
+            raise
+        if not sofascore_api_key:
+            return {
+                "available": False,
+                "reason": "tennis_api_fallback_key_missing",
+                "status_code": status_code,
+                "error": str(tennis_error),
+                "source": "tennis_api",
+            }
+        scheduled = _safe_provider_result(
+            get_sofascore_scheduled(fixture["match_date"]),
+            reason="sofascore_scheduled_returned_none",
+            source="sofascore_scraper",
+        )
+        if not scheduled.get("available", True):
+            return scheduled
+        fallback = _safe_provider_result(
+            fetch_sofascore_fixture_odds(
+                player_1_name=str(fixture["player_1_name"]),
+                player_2_name=str(fixture["player_2_name"]),
+                match_date=fixture["match_date"],
+                tournament=str(fixture["tournament"]),
+                api_key=sofascore_api_key,
+                host=sofascore_host,
+                scheduled_payload=scheduled,
+            ),
+            reason="sofascore_odds_returned_none",
+            source="sofascore_scraper",
+        )
+        odds_cache[key] = fallback
+        st.session_state["upcoming_odds_cache"] = dict(odds_cache)
+        result = _sofascore_movements(fixture, fallback)
+        result["source"] = "sofascore_scraper_odds_fallback"
+        result["fallback_trigger"] = (
+            "tennis_api_http_429" if is_rate_limited
+            else "tennis_api_http_403"
+        )
+        return result
+    except Exception as error:
+        return {
+            "available": False,
+            "reason": "movement_provider_error",
+            "error": f"{type(error).__name__}: {error}",
+            "source": "odds_integration",
+        }
 
 def odds_display(value: Any) -> str:
     try:
@@ -2248,344 +2850,553 @@ def make_match_selection(fixture: pd.Series) -> tuple[dict[str, Any] | None, str
 
 
 # ---------------------------------------------------------------------------
-# Render one actionable row per fixture. Streamlit data_editor does not support
-# true button cells, so the table is rendered with st.columns and keyed buttons.
+# Day and tournament sections with interactive sortable match rows
 # ---------------------------------------------------------------------------
-for match_date, date_frame in render_visible.groupby("match_date", sort=True):
+def _match_finished(status: Any) -> bool:
+    normalized = normalize_text(status)
+    return any(token in normalized for token in ("ended", "finished", "completed", "final"))
+
+
+def _score_total_games(score: Any) -> float:
+    text = str(score or "").upper().strip()
+    if not text or any(token in text for token in ("W/O", "WALKOVER")):
+        return np.nan
+    total = 0
+    parsed = 0
+    for token in text.split():
+        match = re.match(r"^(\d+)-(\d+)(?:\([^)]*\))?", token)
+        if match:
+            total += int(match.group(1)) + int(match.group(2))
+            parsed += 1
+    return float(total) if parsed else np.nan
+
+
+def _winner_side(fixture: pd.Series) -> int | None:
+    details = fixture.get("score_details", {})
+    if not isinstance(details, dict):
+        return None
+    winner = normalize_text(details.get("winner_name", ""))
+    p1 = normalize_text(fixture.get("player_1_name", ""))
+    p2 = normalize_text(fixture.get("player_2_name", ""))
+    if winner and winner == p1:
+        return 1
+    if winner and winner == p2:
+        return 2
+    return None
+
+
+def _green_if(value: str, favorable: bool) -> str:
+    if not favorable:
+        return value
+    return f'<span style="color:#14833b;font-weight:700">{value}</span>'
+
+
+def _write_html(container: Any, value: str) -> None:
+    container.markdown(value, unsafe_allow_html=True)
+
+
+def _paired_value(first: str, second: str, favorable: bool = False) -> str:
+    value = f"P1 {first}<br>P2 {second}"
+    return _green_if(value, favorable)
+
+
+sort_options = {
+    "Time": "scheduled_sort",
+    "Status": "match_status",
+    "Round": "round",
+    "Player 1": "player_1_name",
+    "Player 2": "player_2_name",
+    "P1 % Win": "model_probability_player_1",
+    "P2 % Win": "model_probability_player_2",
+    "P1 Fair": "model_fair_odds_player_1",
+    "P2 Fair": "model_fair_odds_player_2",
+    "P1 Odds": "market_odds_player_1",
+    "P2 Odds": "market_odds_player_2",
+    "P1 Edge": "edge_player_1",
+    "P2 Edge": "edge_player_2",
+    "O18.5": "over_18_5_probability",
+    "O19.5": "over_19_5_probability",
+    "O20.5": "over_20_5_probability",
+    "O21.5": "over_21_5_probability",
+    "O22.5": "over_22_5_probability",
+}
+
+for day_position, (match_date, date_frame) in enumerate(
+    visible.groupby("match_date", sort=True)
+):
+    date_frame = date_frame.reset_index(drop=True).copy()
     formatted_date = pd.to_datetime(match_date, errors="coerce")
     date_label = (
         formatted_date.strftime("%A, %d %B %Y")
         if pd.notna(formatted_date)
         else str(match_date)
     )
-    st.subheader(f"📅 {date_label}")
+    calculated_for_day = int(date_frame["model_probability_player_1"].notna().sum())
+    st.subheader(
+        f"📅 {date_label} · {len(date_frame)} matches · "
+        f"{calculated_for_day} calculated"
+    )
 
-    for tournament, tournament_frame in date_frame.groupby("tournament", sort=True):
-        tournament_frame = tournament_frame.copy()
-        competition = str(tournament_frame["competition_type"].iloc[0])
-        surface_label = str(tournament_frame["surface"].iloc[0])
+    for tournament_position, (
+        tournament_name,
+        tournament_frame,
+    ) in enumerate(
+        date_frame.groupby(
+            "tournament",
+            sort=True,
+        )
+    ):
+        tournament_frame = (
+            tournament_frame
+            .reset_index(drop=True)
+            .copy()
+        )
+
+        surface_values = sorted(
+            tournament_frame["surface"]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        surface_label = (
+            " / ".join(surface_values)
+            if surface_values
+            else "Unknown surface"
+        )
+
+        ended_count = int(
+            tournament_frame[
+                "match_status"
+            ]
+            .map(_match_finished)
+            .sum()
+        )
+
+        # Debe definirse antes de utilizarse en cualquier widget.
+        safe_tournament = re.sub(
+            r"[^a-zA-Z0-9_]+",
+            "_",
+            str(tournament_name),
+        ).strip("_")
+
+        # Protección para nombres que solo contengan símbolos.
+        if not safe_tournament:
+            safe_tournament = "unknown_tournament"
 
         with st.expander(
-            f"🎾 {tournament} · {competition} · {surface_label} · "
-            f"{len(tournament_frame)} matches",
-            expanded=True,
+            (
+                f"🎾 {tournament_name} · "
+                f"{surface_label} · "
+                f"{len(tournament_frame)} matches · "
+                f"{ended_count} ended"
+            ),
+            expanded=(
+                day_position == 0
+                and tournament_position == 0
+            ),
         ):
-            sort_left, sort_right = st.columns([2, 1])
-            safe_tournament_key = re.sub(r"[^a-zA-Z0-9_]+", "_", f"{match_date}_{tournament}")
-            sort_options = {
-                "Scheduled order": ("order_of_play", True),
-                "Scheduled time": ("scheduled_sort", True),
-                "Player 1 win %": ("model_probability_player_1", False),
-                "Player 2 win %": ("model_probability_player_2", False),
-                "Player 1 fair odds": ("model_fair_odds_player_1", True),
-                "Player 2 fair odds": ("model_fair_odds_player_2", True),
-                "Player 1 wins first set": ("player_1_first_set_probability", False),
-                "Player 2 wins first set": ("player_2_first_set_probability", False),
-                "Player 1 wins a set": ("player_1_win_set_probability", False),
-                "Player 2 wins a set": ("player_2_win_set_probability", False),
-                "Over games": ("over_games_probability", False),
-                "Reliability sample": ("_reliability_sample", False),
-                "Player 1 name": ("player_1_name", True),
-                "Player 2 name": ("player_2_name", True),
-            }
-            with sort_left:
+            render_tournament_actions = st.toggle(
+                (
+                    "Load interactive actions "
+                    "for this tournament"
+                ),
+                value=False,
+                key=(
+                    "render_tournament_"
+                    f"{match_date}_"
+                    f"{safe_tournament}"
+                ),
+                help=(
+                    "The default table is sortable and "
+                    "contains every match. Enable this "
+                    "only when Odds, Model, IA or Match "
+                    "actions are needed."
+                ),
+            )
+
+            if not render_tournament_actions:
+                preview = tournament_frame.copy()
+
+            # Continúa aquí el código de la tabla ligera.
+
+                preview["Players"] = (
+                    "P1 "
+                    + preview["player_1_name"].astype(str)
+                    + " | P2 "
+                    + preview["player_2_name"].astype(str)
+                )
+
+                preview["% Win"] = preview.apply(
+                    lambda row: (
+                        "P1 "
+                        + prediction_display(
+                            row.get(
+                                "model_probability_player_1"
+                            ),
+                            True,
+                        )
+                        + " | P2 "
+                        + prediction_display(
+                            row.get(
+                                "model_probability_player_2"
+                            ),
+                            True,
+                        )
+                    ),
+                    axis=1,
+                )
+
+                preview["Fair"] = preview.apply(
+                    lambda row: (
+                        "P1 "
+                        + prediction_display(
+                            row.get(
+                                "model_fair_odds_player_1"
+                            )
+                        )
+                        + " | P2 "
+                        + prediction_display(
+                            row.get(
+                                "model_fair_odds_player_2"
+                            )
+                        )
+                    ),
+                    axis=1,
+                )
+
+                preview["Odds"] = preview.apply(
+                    lambda row: (
+                        "P1 "
+                        + odds_display(
+                            row.get("market_odds_player_1")
+                        )
+                        + " | P2 "
+                        + odds_display(
+                            row.get("market_odds_player_2")
+                        )
+                    ),
+                    axis=1,
+                )
+
+                preview["Edge"] = preview.apply(
+                    lambda row: (
+                        "P1 "
+                        + (
+                            prediction_display(
+                                float(
+                                    row["edge_player_1"]
+                                )
+                                * 100.0,
+                                True,
+                            )
+                            if pd.notna(
+                                row.get("edge_player_1")
+                            )
+                            else "-"
+                        )
+                        + " | P2 "
+                        + (
+                            prediction_display(
+                                float(
+                                    row["edge_player_2"]
+                                )
+                                * 100.0,
+                                True,
+                            )
+                            if pd.notna(
+                                row.get("edge_player_2")
+                            )
+                            else "-"
+                        )
+                    ),
+                    axis=1,
+                )
+
+                for preview_line in OVER_LINES:
+                    source_column = (
+                        "over_"
+                        + str(preview_line).replace(
+                            ".",
+                            "_",
+                        )
+                        + "_probability"
+                    )
+
+                    preview[
+                        f"O{preview_line:.1f}"
+                    ] = preview[source_column].map(
+                        lambda value: prediction_display(
+                            value,
+                            True,
+                        )
+                    )
+
+                preview["Score"] = preview.apply(
+                    lambda row: (
+                        str(
+                            row.get(
+                                "match_score",
+                                "-",
+                            )
+                        )
+                        if _match_finished(
+                            row.get("match_status")
+                        )
+                        else "-"
+                    ),
+                    axis=1,
+                )
+
+                preview = preview.rename(
+                    columns={
+                        "scheduled_time": "Time",
+                        "match_status": "Status",
+                        "round": "Round",
+                    }
+                )
+
+                preview_columns = [
+                    "Time",
+                    "Status",
+                    "Round",
+                    "Score",
+                    "Players",
+                    "% Win",
+                    "Fair",
+                    "Odds",
+                    "Edge",
+                    "O18.5",
+                    "O19.5",
+                    "O20.5",
+                    "O21.5",
+                    "O22.5",
+                ]
+
+                st.dataframe(
+                    preview.loc[
+                        :,
+                        preview_columns,
+                    ],
+                    use_container_width=True,
+                    hide_index=True,
+                    height=min(
+                        44 + 35 * len(preview),
+                        460,
+                    ),
+                )
+
+                continue
+
+            sort_1, sort_2 = st.columns([2, 1])
+            safe_tournament = re.sub(r"[^a-zA-Z0-9_]+", "_", str(tournament_name))
+            with sort_1:
                 selected_sort = st.selectbox(
                     "Sort matches by",
                     list(sort_options),
-                    key=f"sort_column_{safe_tournament_key}",
+                    key=f"sort_{match_date}_{safe_tournament}",
                 )
-            with sort_right:
-                reverse_sort = st.toggle(
-                    "Reverse",
-                    value=False,
-                    key=f"sort_reverse_{safe_tournament_key}",
+            with sort_2:
+                descending = st.toggle(
+                    "Descending",
+                    key=f"sort_desc_{match_date}_{safe_tournament}",
                 )
-            tournament_frame["_reliability_sample"] = tournament_frame["reliability_details"].map(
-                lambda value: float(value.get("sample_size", np.nan))
-                if isinstance(value, dict) and value.get("available")
-                else np.nan
-            )
-            primary_column, default_ascending = sort_options[selected_sort]
-            ascending = (not default_ascending) if reverse_sort else default_ascending
-            secondary_columns = [
-                column for column in ("order_of_play", "scheduled_sort", "player_1_name", "player_2_name")
-                if column in tournament_frame and column != primary_column
-            ]
             tournament_frame = tournament_frame.sort_values(
-                [primary_column, *secondary_columns],
-                ascending=[ascending, *([True] * len(secondary_columns))],
+                sort_options[selected_sort],
+                ascending=not descending,
                 kind="mergesort",
                 na_position="last",
-            ).copy()
-            widths = [0.82, 0.52, 0.52, 0.55, 1.35, 0.58, 0.58, 0.58, 0.58, 1.35, 0.58, 0.58, 0.58, 0.58, 0.64, 0.64, 0.82, 0.78]
-            headers = [
-                "Details", "Time", "Round", "Surface",
-                "Player 1", "%Win", "1st set", "Wins set", "Fair",
-                "Player 2", "%Win", "1st set", "Wins set", "Fair",
-                "Over", "Under", "Reliability", "Market",
+            )
+
+            widths = [
+                .48, .62, .45, .72, 1.55, .82, .72, .72, .72,
+                .62, .62, .62, .62, .62, .72, .72, .72,
             ]
+            headers = [
+                "Time", "Status", "Round", "Score", "Players",
+                "% Win", "Fair", "Odds", "Edge",
+                "O18.5", "O19.5", "O20.5", "O21.5", "O22.5",
+                "Load Odds", "Model Details", "IA Analysis", "Match Details",
+            ]
+            # Add one action width because there are four actions.
+            widths.append(.72)
             header_columns = st.columns(widths, gap="small")
             for container, label in zip(header_columns, headers):
                 container.markdown(f"**{label}**")
 
-            for row_position, (_, fixture) in enumerate(tournament_frame.iterrows()):
-                prediction_key = str(fixture["prediction_key"])
-                odds_item = odds_cache.get(prediction_key, {})
-                row_columns = st.columns(widths, gap="small", vertical_alignment="center")
-                safe_key = re.sub(r"[^a-zA-Z0-9_]+", "_", prediction_key)
-
-                with row_columns[0]:
-                    if st.button("Go details", key=f"details_{safe_key}", use_container_width=True):
-                        selection, selection_error = make_match_selection(fixture)
-                        if selection_error:
-                            st.session_state["upcoming_action_error"] = selection_error
-                        else:
-                            st.session_state["upcoming_match_selection"] = selection
-                            st.switch_page(MATCH_PREDICTOR_PAGE)
-                row_columns[1].write(str(fixture["scheduled_time"]))
-                row_columns[2].write(str(fixture["round"]))
-                row_columns[3].write(str(fixture["surface"]))
-                row_columns[4].write(str(fixture["player_1_name"]))
-                row_columns[5].write(prediction_display(fixture["model_probability_player_1"], True))
-                row_columns[6].write(prediction_display(fixture["player_1_first_set_probability"], True))
-                row_columns[7].write(prediction_display(fixture["player_1_win_set_probability"], True))
-                row_columns[8].write(prediction_display(fixture["model_fair_odds_player_1"]))
-                row_columns[9].write(str(fixture["player_2_name"]))
-                row_columns[10].write(prediction_display(fixture["model_probability_player_2"], True))
-                row_columns[11].write(prediction_display(fixture["player_2_first_set_probability"], True))
-                row_columns[12].write(prediction_display(fixture["player_2_win_set_probability"], True))
-                row_columns[13].write(prediction_display(fixture["model_fair_odds_player_2"]))
-                row_columns[14].write(prediction_display(fixture["over_games_probability"], True))
-                row_columns[15].write(prediction_display(fixture["under_games_probability"], True))
-                market_probabilities = prediction_cache.get(prediction_key, {}).get("market_probabilities", {})
-                historical_evidence = historical_evidence_cache.get(prediction_key, {})
-                row_columns[16].write(str(fixture["model_reliability"]))
-
-                with row_columns[17]:
-                    if st.button("See odds", key=f"odds_{safe_key}", use_container_width=True):
-                        if not api_key:
-                            st.session_state["upcoming_action_error"] = "TENNIS_API_KEY is not configured."
-                        else:
-                            try:
-                                with st.spinner("Loading odds..."):
-                                    odds_cache[prediction_key] = fetch_fixture_odds(fixture, api_key, odds_host)
-                                st.session_state["upcoming_odds_cache"] = odds_cache
-                                st.rerun()
-                            except requests.RequestException as error:
-                                odds_cache[prediction_key] = {
-                                    "available": False,
-                                    "reason": "odds_api_error",
-                                    "error": str(error),
-                                }
-                                st.session_state["upcoming_odds_cache"] = odds_cache
-                                st.rerun()
-
-                if odds_item and not odds_item.get("available"):
-                    reason = odds_item.get("reason", "odds_unavailable")
-                    details = odds_item.get("error") or "; ".join(
-                        str(value) for value in odds_item.get("diagnostics", [])
+            for _, fixture in tournament_frame.iterrows():
+                key = str(fixture["prediction_key"])
+                safe_key = re.sub(r"[^a-zA-Z0-9_]+", "_", key)
+                cols = st.columns(widths, gap="small", vertical_alignment="center")
+                finished = _match_finished(fixture.get("match_status"))
+                winner_side = _winner_side(fixture) if finished else None
+                p1_probability = pd.to_numeric(
+                    fixture.get("model_probability_player_1"), errors="coerce"
+                )
+                p2_probability = pd.to_numeric(
+                    fixture.get("model_probability_player_2"), errors="coerce"
+                )
+                winner_prediction_correct = bool(
+                    finished
+                    and winner_side in {1, 2}
+                    and (
+                        (winner_side == 1 and pd.notna(p1_probability) and p1_probability > 50.0)
+                        or (winner_side == 2 and pd.notna(p2_probability) and p2_probability > 50.0)
                     )
-                    message = (
-                        f"Odds unavailable for {fixture['player_1_name']} vs "
-                        f"{fixture['player_2_name']}: {reason}"
-                    )
-                    if details:
-                        message += f" ({details})"
-                    st.caption(message)
-                model_evidence = prediction_cache.get(
-                    prediction_key, {}
-                ).get("market_probabilities", {})
+                )
+                total_games = _score_total_games(fixture.get("match_score")) if finished else np.nan
 
-                # A closed expander still executes its body in Streamlit. Use a
-                # button-backed selection so only one model-detail subtree is
-                # built during a rerun.
-                if model_evidence.get("available"):
-                    details_state_key = "upcoming_open_model_details"
-                    is_open_model = (
-                        st.session_state.get(details_state_key) == prediction_key
+                cols[0].write(str(fixture.get("scheduled_time", "TBD")))
+                cols[1].write(str(fixture.get("match_status", "Upcoming")))
+                cols[2].write(str(fixture.get("round", "-")))
+                cols[3].write(str(fixture.get("match_score", "-")) if finished else "-")
+                cols[4].markdown(
+                    f"P1 **{fixture.get('player_1_name', '-')}**<br>"
+                    f"P2 **{fixture.get('player_2_name', '-')}**",
+                    unsafe_allow_html=True,
+                )
+                _write_html(
+                    cols[5],
+                    _paired_value(
+                        prediction_display(p1_probability, True),
+                        prediction_display(p2_probability, True),
+                        winner_prediction_correct,
+                    ),
+                )
+                _write_html(
+                    cols[6],
+                    _paired_value(
+                        prediction_display(fixture.get("model_fair_odds_player_1")),
+                        prediction_display(fixture.get("model_fair_odds_player_2")),
+                    ),
+                )
+                _write_html(
+                    cols[7],
+                    _paired_value(
+                        odds_display(fixture.get("market_odds_player_1")),
+                        odds_display(fixture.get("market_odds_player_2")),
+                    ),
+                )
+                _write_html(
+                    cols[8],
+                    _paired_value(
+                        prediction_display(float(fixture["edge_player_1"]) * 100, True)
+                        if pd.notna(fixture.get("edge_player_1")) else "-",
+                        prediction_display(float(fixture["edge_player_2"]) * 100, True)
+                        if pd.notna(fixture.get("edge_player_2")) else "-",
+                    ),
+                )
+
+                for column_index, line in enumerate(OVER_LINES, start=9):
+                    probability = pd.to_numeric(
+                        fixture.get(f"over_{str(line).replace('.', '_')}_probability"),
+                        errors="coerce",
                     )
+                    favorable = bool(
+                        finished
+                        and pd.notna(total_games)
+                        and pd.notna(probability)
+                        and probability > 50.0
+                        and total_games > line
+                    )
+                    _write_html(
+                        cols[column_index],
+                        _green_if(prediction_display(probability, True), favorable),
+                    )
+
+                with cols[14]:
                     if st.button(
-                        "Hide model details" if is_open_model else "Show model details",
-                        key=f"model_details_{safe_key}",
+                        "Loaded" if odds_cache.get(key, {}).get("available") else "Load",
+                        key=f"odds_{safe_key}",
+                        use_container_width=True,
+                        disabled=not bool(api_key),
+                    ):
+                        try:
+                            with st.spinner("Resolving event and loading pre-match odds..."):
+                                odds_result = _safe_provider_result(
+                                    fetch_fixture_odds(fixture, api_key, odds_host),
+                                    reason="odds_integration_returned_none",
+                                    source="upcoming_matches",
+                                )
+                            odds_cache[key] = odds_result
+                            st.session_state["upcoming_odds_cache"] = dict(odds_cache)
+                            level = "success" if odds_result.get("available") else "warning"
+                            message = (
+                                f"Odds loaded: {odds_result.get('odds_player_1', '-')} / "
+                                f"{odds_result.get('odds_player_2', '-')}"
+                                if odds_result.get("available")
+                                else "No usable match-winner odds were returned. "
+                                f"Reason: {odds_result.get('reason', 'unavailable')}. "
+                                f"Source: {odds_result.get('source', 'unknown')}."
+                            )
+                            st.session_state["upcoming_api_notice"] = {
+                                "level": level, "message": message,
+                            }
+                        except Exception as error:
+                            st.session_state["upcoming_api_notice"] = {
+                                "level": "error",
+                                "message": f"Odds error: {type(error).__name__}: {error}",
+                            }
+                        st.rerun()
+
+                with cols[15]:
+                    if st.button(
+                        "View",
+                        key=f"model_{safe_key}",
                         use_container_width=True,
                     ):
-                        st.session_state[details_state_key] = (
-                            None if is_open_model else prediction_key
+                        st.session_state["upcoming_open_model_details"] = (
+                            None
+                            if st.session_state.get("upcoming_open_model_details") == key
+                            else key
                         )
                         st.rerun()
 
-                    if is_open_model:
+                with cols[16]:
+                    if st.button(
+                        "Open",
+                        key=f"ia_{safe_key}",
+                        use_container_width=True,
+                    ):
+                        selection, error = make_match_selection(fixture)
+                        if error:
+                            st.session_state["upcoming_action_error"] = error
+                        else:
+                            st.session_state["upcoming_match_selection"] = selection
+                            st.session_state["ia_candidate_selection"] = {
+                                "fixture_key": key,
+                                "fixture": fixture.to_dict(),
+                                "auto_generate": True,
+                            }
+                            st.switch_page(IA_CANDIDATES_PAGE)
+
+                with cols[17]:
+                    if st.button(
+                        "Open",
+                        key=f"details_{safe_key}",
+                        use_container_width=True,
+                    ):
+                        selection, error = make_match_selection(fixture)
+                        if error:
+                            st.session_state["upcoming_action_error"] = error
+                        else:
+                            st.session_state["upcoming_match_selection"] = selection
+                            st.switch_page(MATCH_PREDICTOR_PAGE)
+
+                if st.session_state.get("upcoming_open_model_details") == key:
+                    model_item = prediction_cache.get(key, {})
+                    with st.container(border=True):
                         st.markdown(
-                            f"**Direct models:** P1 first set "
-                            f"{model_evidence.get('player_1_first_set_probability', np.nan):.1%} · "
-                            f"P2 first set "
-                            f"{model_evidence.get('player_2_first_set_probability', np.nan):.1%} · "
-                            f"P1 wins >=1 set "
-                            f"{model_evidence.get('player_1_win_any_set_probability', model_evidence.get('player_1_win_set_probability', np.nan)):.1%} · "
-                            f"P2 wins >=1 set "
-                            f"{model_evidence.get('player_2_win_any_set_probability', model_evidence.get('player_2_win_set_probability', np.nan)):.1%} · "
-                            f"Over {model_evidence.get('over_games_line')} "
-                            f"{model_evidence.get('over_games_probability', np.nan):.1%} · "
-                            f"Expected games "
-                            f"{model_evidence.get('expected_total_games', np.nan):.1f}"
+                            f"**Model details · {fixture.get('player_1_name')} vs "
+                            f"{fixture.get('player_2_name')}**"
                         )
-
-                        structural_baseline = model_evidence.get("structural_baseline", {})
-                        spw_audit = structural_baseline.get(
-                            "spw_audit", model_evidence.get("spw_audit", {})
-                        )
-                        screen_p1 = spw_audit.get("screen_player_1", {})
-                        screen_p2 = spw_audit.get("screen_player_2", {})
-                        if screen_p1 and screen_p2:
-                            st.markdown("**SPW model audit**")
-                            audit_rows = []
-                            for player_name, side_audit in (
-                                (str(fixture["player_1_name"]), screen_p1),
-                                (str(fixture["player_2_name"]), screen_p2),
-                            ):
-                                audit_rows.append(
-                                    {
-                                        "Player": player_name,
-                                        "Raw SPW %": 100.0 * pd.to_numeric(
-                                            side_audit.get("raw_probability"),
-                                            errors="coerce",
-                                        ),
-                                        "Corrected SPW %": 100.0 * pd.to_numeric(
-                                            side_audit.get("corrected_probability"),
-                                            errors="coerce",
-                                        ),
-                                        "Final SPW %": 100.0 * pd.to_numeric(
-                                            side_audit.get("final_probability"),
-                                            errors="coerce",
-                                        ),
-                                        "Clipped": bool(
-                                            side_audit.get("clipping_applied")
-                                        ),
-                                        "Lower bound": bool(
-                                            side_audit.get("at_lower_bound")
-                                        ),
-                                        "Upper bound": bool(
-                                            side_audit.get("at_upper_bound")
-                                        ),
-                                    }
-                                )
-                            st.dataframe(
-                                pd.DataFrame(audit_rows),
-                                use_container_width=True,
-                                hide_index=True,
-                            )
-                            st.caption(
-                                "Market feature coverage: "
-                                f"{spw_audit.get('feature_count', 0):,} features · "
-                                f"{spw_audit.get('missing_feature_count', 0):,} missing · "
-                                f"{spw_audit.get('missing_feature_rate', 0.0):.1%} missing rate."
-                            )
-                            if spw_audit.get("boundary_warning"):
-                                st.warning(
-                                    "At least one SPW estimate is at or near the "
-                                    "configured boundary. Secondary-market "
-                                    "probabilities may be unusually extreme."
-                                )
-
-                            missing_spw_features = spw_audit.get(
-                                "missing_features", []
-                            )
-                            if missing_spw_features:
-                                reveal_key = f"show_missing_spw_{safe_key}"
-                                if st.button(
-                                    f"Show missing SPW features "
-                                    f"({len(missing_spw_features)})",
-                                    key=reveal_key,
-                                ):
-                                    st.code("\n".join(missing_spw_features))
-
-                        scores = structural_baseline.get(
-                            "set_score_probabilities",
-                            model_evidence.get("set_score_probabilities", {}),
-                        )
-                        if scores:
-                            st.dataframe(
-                                pd.DataFrame(
-                                    [
-                                        {"Set score": score, "Probability": probability}
-                                        for score, probability in scores.items()
-                                    ]
-                                ),
-                                use_container_width=True,
-                                hide_index=True,
-                            )
-
-                        evidence = historical_evidence_cache.get(prediction_key)
-                        if evidence is None:
-                            if st.button(
-                                "Load H2H and comparable-player evidence",
-                                key=f"load_evidence_{safe_key}",
-                                use_container_width=True,
-                            ):
-                                player_1_id = local_player_lookup.get(
-                                    canonical_player_lookup_key(fixture["player_1_name"])
-                                )
-                                player_2_id = local_player_lookup.get(
-                                    canonical_player_lookup_key(fixture["player_2_name"])
-                                )
-                                if player_1_id is None or player_2_id is None:
-                                    historical_evidence_cache[prediction_key] = {
-                                        "available": False,
-                                        "reason": "player_not_matched",
-                                    }
-                                else:
-                                    selected_over_line = float(
-                                        over_line_bo5
-                                        if int(fixture["best_of"]) == 5
-                                        else over_line_bo3
-                                    )
-                                    with st.spinner(
-                                        "Loading H2H and comparable-player evidence..."
-                                    ):
-                                        historical_evidence_cache[prediction_key] = (
-                                            get_match_market_probabilities(
-                                                player_1_id=player_1_id,
-                                                player_2_id=player_2_id,
-                                                surface=str(fixture["surface"]),
-                                                best_of=int(fixture["best_of"]),
-                                                over_games_line=selected_over_line,
-                                                as_of_date=fixture["match_date"],
-                                            )
-                                        )
-                                st.session_state[
-                                    "upcoming_historical_evidence"
-                                ] = dict(historical_evidence_cache)
-                                st.rerun()
-                        elif not evidence.get("available"):
-                            st.caption(
-                                "No score-based historical evidence is available "
-                                f"for this matchup ({evidence.get('reason', 'unavailable')})."
+                        if not model_item:
+                            st.info(
+                                "Model details are unavailable until probabilities are calculated."
                             )
                         else:
-                            with st.expander(
-                                "H2H and comparable-player evidence",
-                                expanded=False,
-                            ):
-                                st.caption(
-                                    f"Over line: {evidence.get('over_games_line')} games. "
-                                    "Historical comparison: beta-smoothed H2H, "
-                                    "similar opponents and recent surface matches."
-                                )
-                                scope_rows = []
-                                for player_label, scope_key in (
-                                    (str(fixture["player_1_name"]), "player_1_scopes"),
-                                    (str(fixture["player_2_name"]), "player_2_scopes"),
-                                ):
-                                    for scope in evidence.get(scope_key, []):
-                                        scope_rows.append(
-                                            {"Player": player_label, **scope}
-                                        )
-                                if scope_rows:
-                                    st.dataframe(
-                                        pd.DataFrame(scope_rows),
-                                        use_container_width=True,
-                                        hide_index=True,
-                                    )
+                            st.json(model_item, expanded=False)
                 st.divider()
 
 if st.session_state.get("upcoming_action_error"):
@@ -2594,6 +3405,8 @@ if st.session_state.get("upcoming_action_error"):
 with st.expander("Data source and limitations"):
     st.markdown(
         """
+        - Tennis API remains the primary provider. SofaScore Scraper is called only after Tennis API returns HTTP 403 or HTTP 429.
+        - SofaScore scheduled responses are cached once per date per Streamlit session and reused for scores, odds and movement.
         - Only ATP singles fixtures are requested.
         - ATP main draw, qualifying and Challenger are classified from tournament rank/name and round.
         - Times are shown in Europe/Madrid when the provider returns a timestamp.

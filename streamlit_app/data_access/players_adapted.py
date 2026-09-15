@@ -176,6 +176,9 @@ LOSER_MATCH_STATISTICS = {
     "second_serve_points_won": "l_2ndWon", "service_games": "l_SvGms",
     "break_points_saved": "l_bpSaved", "break_points_faced": "l_bpFaced",
 }
+DEFAULT_OVER_GAMES_LINE_BO3 = 22.5
+DEFAULT_OVER_GAMES_LINE_BO5 = 38.5
+
 SURFACE_PREFIX = {
     "Hard": "hard", "Clay": "clay", "Grass": "grass",
     "Carpet": "carpet", "Unknown": "unknown",
@@ -2472,7 +2475,15 @@ def get_match_market_probabilities(
     """
     p1 = _normalize_player_id(player_1_id)
     p2 = _normalize_player_id(player_2_id)
-    line = float(over_games_line if over_games_line is not None else (38.5 if int(best_of) == 5 else 22.5))
+    line = float(
+        over_games_line
+        if over_games_line is not None
+        else (
+            DEFAULT_OVER_GAMES_LINE_BO5
+            if int(best_of) == 5
+            else DEFAULT_OVER_GAMES_LINE_BO3
+        )
+    )
     if p1 is None or p2 is None or p1 == p2:
         return {"available": False, "reason": "invalid_player_ids", "over_games_line": line}
     normalized_surface = _normalize_surface(surface)
